@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: idreamshop
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    healthCheckTimeout: 5s
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false 

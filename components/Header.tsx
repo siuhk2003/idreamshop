@@ -21,7 +21,6 @@ export function Header({ variant = 'default' }: HeaderProps) {
               className="mr-2"
               priority
             />
-            <span className="text-lg font-semibold">iDream</span>
           </Link>
 
           <div className="flex items-center space-x-4">

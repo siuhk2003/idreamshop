@@ -70,7 +70,7 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const token = request.cookies.get('member-token')?.value
+    const token = (await cookies()).get('member-token')?.value
 
     if (!token) {
       return NextResponse.json(

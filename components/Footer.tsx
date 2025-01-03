@@ -18,7 +18,6 @@ export function Footer() {
                 className="mr-2"
                 priority
               />
-              <span className="text-lg font-semibold">iDream</span>
             </Link>
             <p className="text-gray-400 mb-2">Elevating your style with premium hair accessories.</p>
           </div>
@@ -52,7 +51,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-gray-800 text-center">
-          <p className="text-gray-400">&copy; 2023 BC Accessories. All rights reserved.</p>
+          <p className="text-gray-400">&copy; 2025 iDream Shop. All rights reserved.</p>
         </div>
       </div>
     </footer>
