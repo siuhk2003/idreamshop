@@ -7,8 +7,9 @@ import { Product } from '@prisma/client'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { ProductCard } from '@/components/ProductCard'
+import { Suspense } from 'react'
 
-export default function ProductsPage() {
+function ProductsContent() {
   const searchParams = useSearchParams()
   const category = searchParams.get('category') || 'all'
   const [products, setProducts] = useState<Product[]>([])
@@ -113,6 +114,29 @@ export default function ProductsPage() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow container mx-auto px-4 py-8">
+          <div className="flex gap-8">
+            <FilterSidebar />
+            <div className="flex-1">
+              <div className="flex justify-center items-center h-64">
+                <p>Loading products...</p>
+              </div>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    }>
+      <ProductsContent />
+    </Suspense>
   )
 }
 
