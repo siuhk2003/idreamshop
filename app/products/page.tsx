@@ -6,7 +6,13 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { FilterSidebar } from './filter-sidebar'
 
-// Dynamically import the component that uses useSearchParams with ssr: false
+// Config object for dynamic rendering
+const config = {
+  dynamic: 'force-dynamic',
+  revalidate: 0
+} as const
+
+// Dynamically import with no SSR
 const ProductsSearchHandler = dynamic(
   () => import('./products-search-handler'),
   { 
