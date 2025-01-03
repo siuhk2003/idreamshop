@@ -9,7 +9,7 @@ import { Footer } from '@/components/Footer'
 import { ProductCard } from '@/components/ProductCard'
 import { Suspense } from 'react'
 
-// Separate component for search params handling
+// Separate component for search params and product fetching
 function ProductsSearchHandler() {
   const searchParams = useSearchParams()
   const category = searchParams.get('category') || 'all'
@@ -75,36 +75,44 @@ function ProductsSearchHandler() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p>Loading products...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-64 text-red-500">
+        <p>{error}</p>
+      </div>
+    )
+  }
+
+  if (products.length === 0) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p>No products found</p>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex-1">
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <p>Loading products...</p>
-        </div>
-      ) : error ? (
-        <div className="flex justify-center items-center h-64 text-red-500">
-          <p>{error}</p>
-        </div>
-      ) : products.length === 0 ? (
-        <div className="flex justify-center items-center h-64">
-          <p>No products found</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
-          {products.map((product) => (
-            <ProductCard
-              key={product.id}
-              id={product.id}
-              name={product.name}
-              price={product.price}
-              originalPrice={product.originalPrice}
-              imageUrl={product.imageUrl}
-              isClearance={product.category === 'clearance'}
-              stock={product.stock}
-            />
-          ))}
-        </div>
-      )}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
+      {products.map((product) => (
+        <ProductCard
+          key={product.id}
+          id={product.id}
+          name={product.name}
+          price={product.price}
+          originalPrice={product.originalPrice}
+          imageUrl={product.imageUrl}
+          isClearance={product.category === 'clearance'}
+          stock={product.stock}
+        />
+      ))}
     </div>
   )
 }
@@ -116,15 +124,15 @@ function ProductsContent() {
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="flex gap-8">
           <FilterSidebar />
-          <Suspense fallback={
-            <div className="flex-1">
+          <div className="flex-1">
+            <Suspense fallback={
               <div className="flex justify-center items-center h-64">
                 <p>Loading products...</p>
               </div>
-            </div>
-          }>
-            <ProductsSearchHandler />
-          </Suspense>
+            }>
+              <ProductsSearchHandler />
+            </Suspense>
+          </div>
         </div>
       </main>
       <Footer />
