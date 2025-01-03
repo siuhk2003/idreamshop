@@ -1,13 +1,19 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+interface RouteSegment {
+  params: {
+    id: string
+  }
+}
+
 export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  context: RouteSegment
 ) {
   try {
-    const orderId = params.id
-    const { status, notes, revertStock } = await request.json()
+    const orderId = context.params.id
+    const { status, notes, revertStock } = await req.json()
 
     // Update order status and handle stock reversion in a transaction
     const updatedOrder = await prisma.$transaction(async (tx) => {

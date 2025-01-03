@@ -43,3 +43,5 @@ Required environment variables:
 - `STRIPE_PUBLISHABLE_KEY`
 - `JWT_SECRET_KEY`
 - etc.
+
+
