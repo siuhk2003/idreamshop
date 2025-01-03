@@ -1,15 +1,9 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-type RouteParams = {
-  params: {
-    id: string
-  }
-}
-
 export async function PATCH(
   request: Request,
-  { params }: RouteParams
+  { params }: { params: { id: string } }
 ) {
   try {
     const orderId = params.id
