@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { CheckCircle } from 'lucide-react'
 import { useCart } from '@/contexts/CartContext'
+import { Suspense } from 'react'
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessContent() {
   const { clearCart } = useCart()
   const [error, setError] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(true)
@@ -140,5 +141,21 @@ export default function CheckoutSuccessPage() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow flex items-center justify-center">
+          <div>Processing your order...</div>
+        </main>
+        <Footer />
+      </div>
+    }>
+      <CheckoutSuccessContent />
+    </Suspense>
   )
 } 
