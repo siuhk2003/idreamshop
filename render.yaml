@@ -4,6 +4,7 @@ services:
     env: node
     buildCommand: |
       npm ci
+      npm install -g postcss postcss-cli autoprefixer
       npx prisma generate
       npm run build
     startCommand: npm start
