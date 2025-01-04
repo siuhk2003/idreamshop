@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { validateForm } from '@/lib/validation'
 
 interface MemberProfile {
   email: string
@@ -61,16 +62,12 @@ export default function ProfilePage() {
 
     try {
       const formData = new FormData(e.currentTarget)
-      const data = {
-        firstName: formData.get('firstName'),
-        lastName: formData.get('lastName'),
-        address: formData.get('address'),
-        apartment: formData.get('apartment'),
-        city: formData.get('city'),
-        province: formData.get('province'),
-        postalCode: formData.get('postalCode'),
-        country: formData.get('country'),
-        phone: formData.get('phone'),
+      const data = Object.fromEntries(formData) as Record<string, string>
+      const errors = validateForm(data)
+
+      if (Object.keys(errors).length > 0) {
+        setError('Please correct the following errors: ' + Object.values(errors).join(', '))
+        return
       }
 
       const response = await fetch('/api/member/profile', {

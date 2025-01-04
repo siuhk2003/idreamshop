@@ -12,6 +12,7 @@ import { Elements } from '@stripe/react-stripe-js'
 import { getStripe } from '@/lib/stripe'
 import { PaymentForm } from '@/components/PaymentForm'
 import { CartItem } from '@/types/cart'
+import { validateForm, validateShippingInfo } from '@/lib/validation'
 
 interface ShippingInfo {
   firstName: string
@@ -62,6 +63,10 @@ const options = {
   appearance,
 }
 
+interface FormErrors {
+  [key: string]: string
+}
+
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, removeItem, clearCart } = useCart()
@@ -80,6 +85,8 @@ export default function CheckoutPage() {
     phone: ''
   })
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<FormErrors>({})
+  const [validationErrors, setValidationErrors] = useState<FormErrors>({})
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const gst = subtotal * GST_RATE
@@ -111,55 +118,63 @@ export default function CheckoutPage() {
     }
   }
 
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    
+    if (name in validateShippingInfo) {
+      const validator = validateShippingInfo[name as keyof typeof validateShippingInfo]
+      const error = validator(value)
+      
+      setFieldErrors(prev => ({
+        ...prev,
+        [name]: error || ''
+      }))
+    }
+  }
+
   const handlePaymentSuccess = async (paymentIntentId: string) => {
+    const formData = Object.entries(shippingInfo).reduce((acc, [key, value]) => ({
+      ...acc,
+      [key]: String(value)
+    }), {} as Record<string, string>)
+
+    const errors = validateForm(formData)
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      setValidationErrors(errors)
+      setError('Please fill in all required fields correctly')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return false
+    }
+
     try {
-      // Check stock before finalizing order
+      // Stock check and payment processing...
       const stockResponse = await fetch('/api/check-stock', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items }),
       })
 
       const stockData = await stockResponse.json()
       if (!stockData.success) {
-        setError('Some items are no longer available in the requested quantity')
+        setError('Some items are no longer available')
         stockData.outOfStock.forEach((item: CartItem) => {
           removeItem(item.id)
         })
-        return
+        return false // Prevent payment processing
       }
 
-      // Save complete shipping info and totals objects
+      // If all validations pass, proceed with payment
       const checkoutData = {
-        shippingInfo: {
-          firstName: shippingInfo.firstName,
-          lastName: shippingInfo.lastName,
-          email: shippingInfo.email,
-          address: shippingInfo.address,
-          apartment: shippingInfo.apartment || '',
-          city: shippingInfo.city,
-          province: shippingInfo.province,
-          postalCode: shippingInfo.postalCode,
-          country: shippingInfo.country,
-          phone: shippingInfo.phone
-        },
-        totals: {
-          subtotal,
-          gst,
-          pst,
-          total
-        }
+        shippingInfo,
+        totals: { subtotal, gst, pst, total }
       }
-
-      // Store the complete objects
       localStorage.setItem('checkout_data', JSON.stringify(checkoutData))
-
-      // Redirect will happen through Stripe
+      return true // Allow payment processing
     } catch (error) {
       console.error('Checkout error:', error)
-      setError(error instanceof Error ? error.message : 'Checkout failed. Please try again.')
+      setError(error instanceof Error ? error.message : 'Checkout failed')
+      return false // Prevent payment processing
     }
   }
 
@@ -238,19 +253,31 @@ export default function CheckoutPage() {
                     <Label htmlFor="firstName">First Name</Label>
                     <Input
                       id="firstName"
-                      required
+                      name="firstName"
                       value={shippingInfo.firstName}
                       onChange={(e) => setShippingInfo({...shippingInfo, firstName: e.target.value})}
+                      onBlur={handleBlur}
+                      className={fieldErrors.firstName ? 'border-red-500' : ''}
+                      required
                     />
+                    {fieldErrors.firstName && (
+                      <p className="text-red-500 text-sm mt-1">{fieldErrors.firstName}</p>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="lastName">Last Name</Label>
                     <Input
                       id="lastName"
-                      required
+                      name="lastName"
                       value={shippingInfo.lastName}
                       onChange={(e) => setShippingInfo({...shippingInfo, lastName: e.target.value})}
+                      onBlur={handleBlur}
+                      className={fieldErrors.lastName ? 'border-red-500' : ''}
+                      required
                     />
+                    {fieldErrors.lastName && (
+                      <p className="text-red-500 text-sm mt-1">{fieldErrors.lastName}</p>
+                    )}
                   </div>
                 </div>
 
@@ -258,21 +285,33 @@ export default function CheckoutPage() {
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
+                    name="email"
                     type="email"
-                    required
                     value={shippingInfo.email}
                     onChange={(e) => setShippingInfo({...shippingInfo, email: e.target.value})}
+                    onBlur={handleBlur}
+                    className={fieldErrors.email ? 'border-red-500' : ''}
+                    required
                   />
+                  {fieldErrors.email && (
+                    <p className="text-red-500 text-sm mt-1">{fieldErrors.email}</p>
+                  )}
                 </div>
 
                 <div>
                   <Label htmlFor="address">Address</Label>
                   <Input
                     id="address"
-                    required
+                    name="address"
                     value={shippingInfo.address}
                     onChange={(e) => setShippingInfo({...shippingInfo, address: e.target.value})}
+                    onBlur={handleBlur}
+                    className={fieldErrors.address ? 'border-red-500' : ''}
+                    required
                   />
+                  {fieldErrors.address && (
+                    <p className="text-red-500 text-sm mt-1">{fieldErrors.address}</p>
+                  )}
                 </div>
 
                 <div>
@@ -289,10 +328,16 @@ export default function CheckoutPage() {
                     <Label htmlFor="city">City</Label>
                     <Input
                       id="city"
-                      required
+                      name="city"
                       value={shippingInfo.city}
                       onChange={(e) => setShippingInfo({...shippingInfo, city: e.target.value})}
+                      onBlur={handleBlur}
+                      className={fieldErrors.city ? 'border-red-500' : ''}
+                      required
                     />
+                    {fieldErrors.city && (
+                      <p className="text-red-500 text-sm mt-1">{fieldErrors.city}</p>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="province">Province</Label>
@@ -314,20 +359,32 @@ export default function CheckoutPage() {
                     <Label htmlFor="postalCode">Postal Code</Label>
                     <Input
                       id="postalCode"
-                      required
+                      name="postalCode"
                       value={shippingInfo.postalCode}
                       onChange={(e) => setShippingInfo({...shippingInfo, postalCode: e.target.value})}
+                      onBlur={handleBlur}
+                      className={fieldErrors.postalCode ? 'border-red-500' : ''}
+                      required
                     />
+                    {fieldErrors.postalCode && (
+                      <p className="text-red-500 text-sm mt-1">{fieldErrors.postalCode}</p>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="phone">Phone</Label>
                     <Input
                       id="phone"
+                      name="phone"
                       type="tel"
-                      required
                       value={shippingInfo.phone}
                       onChange={(e) => setShippingInfo({...shippingInfo, phone: e.target.value})}
+                      onBlur={handleBlur}
+                      className={fieldErrors.phone ? 'border-red-500' : ''}
+                      required
                     />
+                    {fieldErrors.phone && (
+                      <p className="text-red-500 text-sm mt-1">{fieldErrors.phone}</p>
+                    )}
                   </div>
                 </div>
               </div>

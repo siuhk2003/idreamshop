@@ -40,6 +40,7 @@ export async function GET(request: Request) {
         description: true,
         price: true,
         originalPrice: true,
+        wholesalePrice: true,
         imageUrl: true,
         category: true,
         stock: true,

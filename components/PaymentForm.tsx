@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 
 interface PaymentFormProps {
   amount: number
-  onSuccess: (paymentIntentId: string) => void
+  onSuccess: (paymentIntentId: string) => Promise<boolean>
   shippingInfo: {
     firstName: string
     lastName: string
@@ -32,61 +32,38 @@ export function PaymentForm({ amount, onSuccess, shippingInfo }: PaymentFormProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!stripe || !elements || !shippingInfo) {
-      return
-    }
-
     setProcessing(true)
-    setMessage("")
     setError(null)
 
     try {
-      // Calculate totals with proper precision
-      const subtotal = Number((amount * 0.87).toFixed(2))
-      const gst = Number((amount * 0.05).toFixed(2))
-      const pst = Number((amount * 0.08).toFixed(2))
-      const total = Number(amount.toFixed(2))
-
-      const checkoutData = {
-        shippingInfo,
-        totals: {
-          subtotal,
-          gst,
-          pst,
-          total
-        }
+      // Validate shipping info first
+      const validationResult = await onSuccess('validation-check')
+      if (!validationResult) {
+        setProcessing(false)
+        return // Stop here if validation fails
       }
-      
-      console.log('Storing checkout data:', checkoutData)
-      const checkoutDataString = JSON.stringify(checkoutData)
-      console.log('Stringified checkout data:', checkoutDataString)
-      localStorage.setItem('checkout_data', checkoutDataString)
 
-      // First, validate the payment element
+      if (!stripe || !elements) {
+        throw new Error('Stripe not initialized')
+      }
+
+      // Only validate payment element after shipping info is valid
       const { error: submitError } = await elements.submit()
       if (submitError) {
         setError(submitError.message || "Please check your payment details")
         return
       }
 
-      // Create payment intent
+      // Create payment intent only after all validations pass
       const response = await fetch('/api/create-payment-intent', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ amount }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount })
       })
 
-      const { clientSecret, error: intentError } = await response.json()
-      if (intentError) {
-        setError(intentError)
-        setProcessing(false)
-        return
-      }
+      const { clientSecret } = await response.json()
 
-      // Confirm the payment
+      // Process payment
       const result = await stripe.confirmPayment({
         elements,
         clientSecret,
@@ -108,24 +85,15 @@ export function PaymentForm({ amount, onSuccess, shippingInfo }: PaymentFormProp
             },
           },
         },
-      });
+      })
 
       if (result.error) {
-        if (result.error.type === "card_error" || result.error.type === "validation_error") {
-          setError(result.error.message || "Please check your card details");
-        } else {
-          setError("An unexpected error occurred.");
-        }
-      } else {
-        const { paymentIntent } = result as unknown as { paymentIntent: { id: string, status: string } };
-        if (paymentIntent.status === 'succeeded') {
-          setMessage("Payment successful!");
-          onSuccess(paymentIntent.id);
-        }
+        throw result.error
       }
-    } catch (err) {
-      console.error('Payment error:', err)
-      setError('Payment failed. Please try again.')
+
+    } catch (error) {
+      console.error('Payment error:', error)
+      setError(error instanceof Error ? error.message : 'Payment failed')
     } finally {
       setProcessing(false)
     }

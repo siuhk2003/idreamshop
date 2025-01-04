@@ -1,36 +1,32 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
-const ADMIN_EMAIL = 'admin@example.com'
-const ADMIN_PASSWORD = 'admin123'
-
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { email, password } = body
+    const { username, password } = await request.json()
 
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      const response = NextResponse.json({ success: true })
-      
-      response.cookies.set('admin-token', 'admin-session', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-      })
-
-      return response
+    if (username !== process.env.ADMIN_USERNAME || password !== process.env.ADMIN_PASSWORD) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid credentials' 
+      }, { status: 401 })
     }
 
-    return NextResponse.json(
-      { error: 'Invalid credentials' },
-      { status: 401 }
-    )
+    // Create response with cookie
+    const response = NextResponse.json({ success: true })
+    response.cookies.set('admin-token', 'true', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    })
+
+    return response
+
   } catch (error) {
-    console.error('Login error:', error)
-    return NextResponse.json(
-      { error: 'Login failed' },
-      { status: 500 }
-    )
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Login failed' 
+    }, { status: 500 })
   }
 } 
