@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import Stripe from 'stripe'
 import { CartItem } from '@/types/cart'
+import { sendEmail } from '@/lib/email'
+import { getOrderConfirmationEmail } from '@/lib/emailTemplates'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-12-18.acacia'
@@ -131,13 +133,57 @@ export async function POST(request: Request) {
           }
         },
         include: {
-          items: true,
+          items: {
+            include: {
+              product: {
+                select: {
+                  name: true
+                }
+              }
+            }
+          },
           shippingInfo: true,
           statusHistory: true
         }
       })
 
       console.log('Created order with relations:', JSON.stringify(order, null, 2))
+
+      // After creating the order, send confirmation email
+      try {
+        if (order.shippingInfo) {
+          const emailData = {
+            orderNumber: order.orderNumber,
+            items: order.items.map(item => ({
+              quantity: item.quantity,
+              price: item.price,
+              product: { name: item.product.name }
+            })),
+            shippingInfo: {
+              firstName: order.shippingInfo.firstName,
+              lastName: order.shippingInfo.lastName,
+              email: order.shippingInfo.email,
+              address: order.shippingInfo.address,
+              apartment: order.shippingInfo.apartment || undefined,
+              city: order.shippingInfo.city,
+              province: order.shippingInfo.province,
+              postalCode: order.shippingInfo.postalCode,
+              phone: order.shippingInfo.phone
+            },
+            subtotal: order.subtotal,
+            gst: order.gst,
+            pst: order.pst,
+            total: order.total
+          }
+          await sendEmail({
+            to: order.shippingInfo.email,
+            subject: `Order Confirmation #${order.orderNumber}`,
+            html: getOrderConfirmationEmail(emailData)
+          })
+        }
+      } catch (emailError) {
+        console.error('Failed to send confirmation email:', emailError)
+      }
 
       return { order, updatedProducts }
     })
