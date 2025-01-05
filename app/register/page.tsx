@@ -3,57 +3,102 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
-import Link from 'next/link'
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { validateForm } from '@/lib/validation'
+import Link from 'next/link'
+
+interface FormErrors {
+  [key: string]: string
+}
 
 export default function RegisterPage() {
   const router = useRouter()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<FormErrors>({})
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    const errors = validateForm({ [name]: value })
+    setFieldErrors(prev => ({
+      ...prev,
+      [name]: errors[name] || ''
+    }))
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
+    setFieldErrors({})
     setLoading(true)
 
     const formData = new FormData(e.currentTarget)
-    const data = {
-      email: formData.get('email'),
-      password: formData.get('password'),
-      confirmPassword: formData.get('confirmPassword'),
-      firstName: formData.get('firstName'),
-      lastName: formData.get('lastName'),
-      address: formData.get('address'),
-      apartment: formData.get('apartment'),
-      city: formData.get('city'),
-      province: formData.get('province'),
-      postalCode: formData.get('postalCode'),
-      country: formData.get('country'),
-      phone: formData.get('phone'),
+    const data = Object.fromEntries(formData.entries()) as Record<string, string>
+
+    // Check passwords match
+    if (data.password !== data.confirmPassword) {
+      setFieldErrors({ confirmPassword: 'Passwords do not match' })
+      setLoading(false)
+      return
+    }
+
+    // Validate all fields
+    const validationErrors = validateForm(data)
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors)
+      setLoading(false)
+      return
     }
 
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
       })
 
       const result = await response.json()
 
       if (!response.ok) {
+        if (result.validationErrors) {
+          setFieldErrors(result.validationErrors)
+          throw new Error('Please correct the highlighted fields')
+        }
         throw new Error(result.error || 'Registration failed')
       }
 
-      router.push('/login?registered=true&message=' + encodeURIComponent(result.message))
+      setIsSuccess(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed')
     } finally {
       setLoading(false)
     }
+  }
+
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Registration Successful!</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center mb-4">
+              A verification email has been sent to your email address.
+              Please check your inbox and click the verification link to complete your registration.
+            </p>
+            <p className="text-sm text-gray-500 text-center">
+              If you don't see the email, please check your spam folder.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -70,75 +115,140 @@ export default function RegisterPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-[200px,1fr] gap-4 items-center">
-              <label className="font-medium text-right">Email</label>
-              <input
-                type="email"
-                name="email"
-                required
-                className="w-full border p-2 rounded"
-              />
+            <div className="grid grid-cols-[200px,1fr] gap-4 items-start">
+              <Label htmlFor="email" className="text-right pt-2">Email</Label>
+              <div className="space-y-1">
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  className={fieldErrors.email ? 'border-red-500' : ''}
+                  onBlur={handleBlur}
+                />
+                {fieldErrors.email && (
+                  <p className="text-red-500 text-sm">{fieldErrors.email}</p>
+                )}
+              </div>
 
-              <label className="font-medium text-right">Password</label>
-              <input
-                type="password"
-                name="password"
-                required
-                className="w-full border p-2 rounded"
-              />
+              <Label htmlFor="password" className="text-right pt-2">Password</Label>
+              <div className="space-y-1">
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  className={fieldErrors.password ? 'border-red-500' : ''}
+                  onBlur={handleBlur}
+                />
+                {fieldErrors.password && (
+                  <p className="text-red-500 text-sm">{fieldErrors.password}</p>
+                )}
+              </div>
 
-              <label className="font-medium text-right">Confirm Password</label>
-              <input
-                type="password"
-                name="confirmPassword"
-                required
-                className="w-full border p-2 rounded"
-              />
+              <Label htmlFor="confirmPassword" className="text-right pt-2">Confirm Password</Label>
+              <div className="space-y-1">
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  required
+                  className={fieldErrors.confirmPassword ? 'border-red-500' : ''}
+                  onBlur={(e) => {
+                    const password = (e.currentTarget.form?.elements.namedItem('password') as HTMLInputElement)?.value
+                    if (e.target.value !== password) {
+                      setFieldErrors(prev => ({
+                        ...prev,
+                        confirmPassword: 'Passwords do not match'
+                      }))
+                    } else {
+                      setFieldErrors(prev => ({
+                        ...prev,
+                        confirmPassword: ''
+                      }))
+                    }
+                  }}
+                />
+                {fieldErrors.confirmPassword && (
+                  <p className="text-red-500 text-sm">{fieldErrors.confirmPassword}</p>
+                )}
+              </div>
 
-              <label className="font-medium text-right">First Name</label>
-              <input
-                type="text"
-                name="firstName"
-                required
-                className="w-full border p-2 rounded"
-              />
+              <Label htmlFor="firstName" className="text-right pt-2">First Name</Label>
+              <div className="space-y-1">
+                <Input
+                  id="firstName"
+                  name="firstName"
+                  required
+                  className={fieldErrors.firstName ? 'border-red-500' : ''}
+                  onBlur={handleBlur}
+                />
+                {fieldErrors.firstName && (
+                  <p className="text-red-500 text-sm">{fieldErrors.firstName}</p>
+                )}
+              </div>
 
-              <label className="font-medium text-right">Last Name</label>
-              <input
-                type="text"
-                name="lastName"
-                required
-                className="w-full border p-2 rounded"
-              />
+              <Label htmlFor="lastName" className="text-right pt-2">Last Name</Label>
+              <div className="space-y-1">
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  required
+                  className={fieldErrors.lastName ? 'border-red-500' : ''}
+                  onBlur={handleBlur}
+                />
+                {fieldErrors.lastName && (
+                  <p className="text-red-500 text-sm">{fieldErrors.lastName}</p>
+                )}
+              </div>
 
-              <label className="font-medium text-right">Address</label>
-              <input
-                type="text"
-                name="address"
-                required
-                className="w-full border p-2 rounded"
-              />
+              <Label htmlFor="address" className="text-right pt-2">Address</Label>
+              <div className="space-y-1">
+                <Input
+                  id="address"
+                  name="address"
+                  required
+                  className={fieldErrors.address ? 'border-red-500' : ''}
+                  onBlur={handleBlur}
+                />
+                {fieldErrors.address && (
+                  <p className="text-red-500 text-sm">{fieldErrors.address}</p>
+                )}
+              </div>
 
-              <label className="font-medium text-right">Apartment</label>
-              <input
-                type="text"
-                name="apartment"
-                className="w-full border p-2 rounded"
-              />
+              <Label htmlFor="apartment" className="text-right pt-2">Apartment</Label>
+              <div className="space-y-1">
+                <Input
+                  id="apartment"
+                  name="apartment"
+                  className={fieldErrors.apartment ? 'border-red-500' : ''}
+                  onBlur={handleBlur}
+                />
+                {fieldErrors.apartment && (
+                  <p className="text-red-500 text-sm">{fieldErrors.apartment}</p>
+                )}
+              </div>
 
-              <label className="font-medium text-right">City</label>
-              <input
-                type="text"
-                name="city"
-                required
-                className="w-full border p-2 rounded"
-              />
+              <Label htmlFor="city" className="text-right pt-2">City</Label>
+              <div className="space-y-1">
+                <Input
+                  id="city"
+                  name="city"
+                  required
+                  className={fieldErrors.city ? 'border-red-500' : ''}
+                  onBlur={handleBlur}
+                />
+                {fieldErrors.city && (
+                  <p className="text-red-500 text-sm">{fieldErrors.city}</p>
+                )}
+              </div>
 
-              <label className="font-medium text-right">Province</label>
+              <Label htmlFor="province" className="text-right pt-2">Province</Label>
               <select
                 name="province"
                 required
-                className="w-full border p-2 rounded"
+                className={fieldErrors.province ? 'border-red-500' : ''}
+                onBlur={handleBlur}
               >
                 <option value="">Select Province</option>
                 <option value="Alberta">Alberta</option>
@@ -152,31 +262,55 @@ export default function RegisterPage() {
                 <option value="Quebec">Quebec</option>
                 <option value="Saskatchewan">Saskatchewan</option>
               </select>
+              {fieldErrors.province && (
+                <p className="text-red-500 text-sm">{fieldErrors.province}</p>
+              )}
 
-              <label className="font-medium text-right">Postal Code</label>
-              <input
-                type="text"
-                name="postalCode"
-                required
-                className="w-full border p-2 rounded"
-              />
+              <Label htmlFor="postalCode" className="text-right pt-2">Postal Code</Label>
+              <div className="space-y-1">
+                <Input
+                  id="postalCode"
+                  name="postalCode"
+                  type="text"
+                  required
+                  className={fieldErrors.postalCode ? 'border-red-500' : ''}
+                  onBlur={handleBlur}
+                />
+                {fieldErrors.postalCode && (
+                  <p className="text-red-500 text-sm">{fieldErrors.postalCode}</p>
+                )}
+              </div>
 
-              <label className="font-medium text-right">Country</label>
-              <input
-                type="text"
-                name="country"
-                required
-                defaultValue="Canada"
-                className="w-full border p-2 rounded"
-              />
+              <Label htmlFor="country" className="text-right pt-2">Country</Label>
+              <div className="space-y-1">
+                <Input
+                  id="country"
+                  name="country"
+                  type="text"
+                  required
+                  defaultValue="Canada"
+                  className={fieldErrors.country ? 'border-red-500' : ''}
+                  onBlur={handleBlur}
+                />
+                {fieldErrors.country && (
+                  <p className="text-red-500 text-sm">{fieldErrors.country}</p>
+                )}
+              </div>
 
-              <label className="font-medium text-right">Phone</label>
-              <input
-                type="tel"
-                name="phone"
-                required
-                className="w-full border p-2 rounded"
-              />
+              <Label htmlFor="phone" className="text-right pt-2">Phone</Label>
+              <div className="space-y-1">
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  required
+                  className={fieldErrors.phone ? 'border-red-500' : ''}
+                  onBlur={handleBlur}
+                />
+                {fieldErrors.phone && (
+                  <p className="text-red-500 text-sm">{fieldErrors.phone}</p>
+                )}
+              </div>
             </div>
 
             <div className="flex justify-end gap-4 pt-4">

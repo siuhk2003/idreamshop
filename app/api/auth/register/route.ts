@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { sendVerificationEmail } from '@/lib/email'
+import { validateForm } from '@/lib/validation'
 
 export async function POST(request: Request) {
   try {
@@ -13,6 +14,25 @@ export async function POST(request: Request) {
     if (password !== confirmPassword) {
       return NextResponse.json(
         { error: 'Passwords do not match' },
+        { status: 400 }
+      )
+    }
+
+    // Validate all fields using the same validation as checkout
+    const validationErrors = validateForm({
+      firstName: rest.firstName,
+      lastName: rest.lastName,
+      email,
+      phone: rest.phone,
+      address: rest.address,
+      city: rest.city,
+      province: rest.province,
+      postalCode: rest.postalCode
+    })
+
+    if (Object.keys(validationErrors).length > 0) {
+      return NextResponse.json(
+        { error: 'Validation failed', validationErrors },
         { status: 400 }
       )
     }
@@ -34,11 +54,9 @@ export async function POST(request: Request) {
 
     // Create verification token
     const verificationToken = crypto.randomBytes(32).toString('hex')
-    const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+    const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000)
 
-    // Use transaction to create both member and verification token
     await prisma.$transaction(async (tx) => {
-      // Create member
       await tx.member.create({
         data: {
           email,
@@ -48,7 +66,6 @@ export async function POST(request: Request) {
         }
       })
 
-      // Create verification token
       await tx.verificationToken.create({
         data: {
           token: verificationToken,
@@ -58,7 +75,6 @@ export async function POST(request: Request) {
       })
     })
 
-    // Send verification email
     await sendVerificationEmail(email, verificationToken)
 
     return NextResponse.json({
