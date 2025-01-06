@@ -9,15 +9,17 @@ type HeaderProps = {
 
 export function Header({ variant = 'default' }: HeaderProps) {
   return (
-    <header className={`${variant === 'home' ? 'bg-transparent' : 'bg-gray-800'} text-white`}>
+    <header className={`${
+      variant === 'home' ? 'bg-transparent' : 'bg-sky-50'
+    } text-gray-800 shadow-sm`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex justify-between items-center">
           <Link href="/" className="flex items-center space-x-2">
             <Image
-              src="/i.png"
+              src="/logo1.jpg"
               alt="iDream Logo"
-              width={40}
-              height={40}
+              width={160}
+              height={160}
               className="mr-2"
               priority
             />
@@ -29,7 +31,7 @@ export function Header({ variant = 'default' }: HeaderProps) {
                 <li>
                   <Link 
                     href="/products?category=new" 
-                    className="hover:text-gray-300"
+                    className="hover:text-gray-600"
                   >
                     New Arrivals
                   </Link>
@@ -37,7 +39,7 @@ export function Header({ variant = 'default' }: HeaderProps) {
                 <li>
                   <Link 
                     href="/products" 
-                    className="hover:text-gray-300"
+                    className="hover:text-gray-600"
                   >
                     All Products
                   </Link>
@@ -45,18 +47,18 @@ export function Header({ variant = 'default' }: HeaderProps) {
                 <li>
                   <Link 
                     href="/products?category=clearance" 
-                    className="hover:text-gray-300"
+                    className="hover:text-gray-600"
                   >
                     Clearance
                   </Link>
                 </li>
                 <li>
-                  <Link href="/about" className="hover:text-gray-300">
+                  <Link href="/about" className="hover:text-gray-600">
                     About
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contact" className="hover:text-gray-300">
+                  <Link href="/contact" className="hover:text-gray-600">
                     Contact
                   </Link>
                 </li>

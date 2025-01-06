@@ -55,6 +55,7 @@ model Order {
   gst             Float
   pst             Float
   total           Float
+  paymentMethod   String          @default("stripe")
 }
 
 model ShippingInfo {

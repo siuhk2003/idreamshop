@@ -53,6 +53,7 @@ interface Order {
     timestamp: string
     notes: string
   }>
+  paymentMethod: string
 }
 
 export default function OrdersPage() {
@@ -139,6 +140,13 @@ export default function OrdersPage() {
     }
   }
 
+  const getDaysSinceCreation = (createdAt: string) => {
+    const days = Math.floor(
+      (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24)
+    )
+    return days
+  }
+
   if (loading) {
     return <div>Loading orders...</div>
   }
@@ -208,6 +216,19 @@ export default function OrdersPage() {
                   {order.shippingInfo.phone}
                 </p>
               </div>
+
+              {order.status === 'PROCESSING' && order.paymentMethod === 'etransfer' && (
+                <div className={`
+                  text-sm px-2 py-1 rounded
+                  ${getDaysSinceCreation(order.createdAt) >= 7 
+                    ? 'bg-red-100 text-red-700' 
+                    : 'bg-yellow-100 text-yellow-700'}
+                `}>
+                  {getDaysSinceCreation(order.createdAt) >= 7 
+                    ? '⚠️ Payment overdue' 
+                    : 'Awaiting e-transfer'}
+                </div>
+              )}
             </CardContent>
           </Card>
         ))

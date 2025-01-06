@@ -22,7 +22,10 @@ export function getOrderConfirmationEmail(order: {
   gst: number
   pst: number
   total: number
+  paymentMethod?: string
 }) {
+  const isETransfer = order.paymentMethod === 'etransfer'
+
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h1 style="color: #333; text-align: center;">Order Confirmation</h1>
@@ -32,6 +35,15 @@ export function getOrderConfirmationEmail(order: {
       <div style="margin: 20px 0; padding: 20px; background-color: #f9f9f9;">
         <h2 style="color: #333;">Order #${order.orderNumber}</h2>
         
+        ${isETransfer ? `
+          <div style="margin: 20px 0; padding: 15px; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 4px;">
+            <p style="color: #856404; margin: 0;">
+              <strong>Please complete your e-transfer payment to: cs@idreamshop.ca</strong><br>
+              Your order will be processed once we receive your payment. This usually takes 1-2 business days.
+            </p>
+          </div>
+        ` : ''}
+
         <h3 style="color: #666;">Items Ordered:</h3>
         <table style="width: 100%; border-collapse: collapse;">
           <tr style="border-bottom: 1px solid #ddd;">
@@ -68,8 +80,9 @@ export function getOrderConfirmationEmail(order: {
         </p>
       </div>
       
-      <p>We'll notify you when your order has been shipped.</p>
-      <p>If you have any questions, please don't hesitate to contact us.</p>
+      ${!isETransfer ? `
+        <p>We'll notify you when your order has been shipped.</p>
+      ` : ''}
       
       <div style="margin-top: 40px; text-align: center; color: #666;">
         <p>Thank you for shopping with us!</p>

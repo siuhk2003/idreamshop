@@ -15,7 +15,7 @@ const ProductsSearchHandler = dynamic(
 
 export default function ProductsPage() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gray-200">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="flex gap-8">

@@ -87,6 +87,7 @@ export default function CheckoutPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FormErrors>({})
   const [validationErrors, setValidationErrors] = useState<FormErrors>({})
+  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'etransfer'>('stripe')
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const gst = subtotal * GST_RATE
@@ -221,6 +222,62 @@ export default function CheckoutPage() {
     } catch (error) {
       console.error('Error loading profile:', error)
       setError('Failed to load profile information')
+    }
+  }
+
+  const handleETransferCheckout = async () => {
+    try {
+      // Validate all fields first
+      const formData = Object.entries(shippingInfo).reduce((acc, [key, value]) => ({
+        ...acc,
+        [key]: String(value)
+      }), {} as Record<string, string>)
+
+      const validationErrors = validateForm(formData)
+      if (Object.keys(validationErrors).length > 0) {
+        setFieldErrors(validationErrors)
+        setValidationErrors(validationErrors)
+        setError('Please fill in all required fields correctly')
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        return
+      }
+
+      // Check stock availability
+      const stockIsValid = await checkStock(items)
+      if (!stockIsValid) {
+        return
+      }
+
+      // Save checkout data
+      localStorage.setItem('checkout_data', JSON.stringify({
+        shippingInfo,
+        totals: { subtotal, gst, pst, total }
+      }))
+
+      const response = await fetch('/api/checkout/etransfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
+          shippingInfo,
+          totals: { subtotal, gst, pst, total }
+        })
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        if (data.validationErrors) {
+          setFieldErrors(data.validationErrors)
+          throw new Error('Please correct the highlighted fields')
+        }
+        throw new Error(data.error || 'Checkout failed')
+      }
+
+      // Store order ID and redirect to success page
+      localStorage.setItem('etransfer_order_id', data.orderId)
+      router.push('/checkout/etransfer-success')
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Checkout failed')
     }
   }
 
@@ -390,25 +447,64 @@ export default function CheckoutPage() {
               </div>
 
               <div className="mt-8">
-                <h2 className="text-xl font-semibold mb-4">Payment Information</h2>
-                <Elements 
-                  stripe={getStripe()} 
-                  options={{
-                    mode: 'payment',
-                    amount: Math.round(total * 100),
-                    currency: 'cad',
-                    appearance: {
-                      theme: 'stripe',
-                    },
-                  }}
-                >
+                <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="radio"
+                      id="stripe"
+                      name="paymentMethod"
+                      value="stripe"
+                      checked={paymentMethod === 'stripe'}
+                      onChange={(e) => setPaymentMethod(e.target.value as 'stripe' | 'etransfer')}
+                    />
+                    <label htmlFor="stripe">Credit Card (Stripe)</label>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="radio"
+                      id="etransfer"
+                      name="paymentMethod"
+                      value="etransfer"
+                      checked={paymentMethod === 'etransfer'}
+                      onChange={(e) => setPaymentMethod(e.target.value as 'stripe' | 'etransfer')}
+                    />
+                    <label htmlFor="etransfer">E-Transfer</label>
+                  </div>
+                </div>
+              </div>
+
+              {paymentMethod === 'stripe' ? (
+                <Elements stripe={getStripe()} options={{
+                  mode: 'payment',
+                  amount: Math.round(total * 100),
+                  currency: 'cad',
+                  appearance: {
+                    theme: 'stripe',
+                  },
+                }}>
                   <PaymentForm 
                     amount={total}
                     onSuccess={handlePaymentSuccess}
                     shippingInfo={shippingInfo}
                   />
                 </Elements>
-              </div>
+              ) : (
+                <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                  <h3 className="font-semibold mb-2">E-Transfer Instructions</h3>
+                  <p>Please send the total amount of ${total.toFixed(2)} to:</p>
+                  <p className="font-mono mt-2">cs@idreamshop.ca</p>
+                  <p className="text-sm mt-4">
+                    Note: Your order will be processed after payment is received.
+                  </p>
+                  <Button 
+                    onClick={handleETransferCheckout}
+                    className="w-full mt-4"
+                  >
+                    Complete Order
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div>

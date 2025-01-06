@@ -15,7 +15,7 @@ export function FilterSidebar() {
   ]
 
   return (
-    <div className="w-64 space-y-4">
+    <div className="w-64 bg-white rounded-lg shadow p-4">
       <h3 className="text-lg font-semibold mb-2">Categories</h3>
       <div className="space-y-2">
         {categories.map(category => (

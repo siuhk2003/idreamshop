@@ -15,10 +15,10 @@ export function Header({ variant = 'default' }: HeaderProps) {
         <div className="flex justify-between items-center">
           <Link href="/" className="flex items-center space-x-2">
             <Image
-              src="/path/to/logo.png"
+              src="/logo1.jpg"
               alt="iDream Logo"
-              width={40}
-              height={40}
+              width={160}
+              height={160}
               className="mr-2"
               priority
             />

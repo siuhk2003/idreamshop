@@ -10,10 +10,12 @@ export function Footer() {
             <Link href="/">
               <a>
                 <Image
-                  src="/path/to/logo.png"
+                  src="/logo1.jpg"
                   alt="iDream Logo"
-                  width={150}
-                  height={50}
+                  width={160}
+                  height={160}
+                  className="mr-2"
+                  priority
                 />
               </a>
             </Link>

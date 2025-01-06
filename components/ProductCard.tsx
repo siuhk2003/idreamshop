@@ -37,7 +37,7 @@ export function ProductCard({
 
   return (
     <Link href={`/products/${id}`}>
-      <Card className="transition-transform hover:scale-105">
+      <Card className="bg-white transition-transform hover:scale-105">
         <CardContent className="p-4">
           <Image
             src={imageUrl}
