@@ -6,11 +6,16 @@ if (!process.env.JWT_SECRET_KEY) {
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET_KEY)
 
+export function getJwtSecretKey() {
+  if (!process.env.JWT_SECRET_KEY) {
+    throw new Error('JWT_SECRET_KEY is not set')
+  }
+  return new TextEncoder().encode(process.env.JWT_SECRET_KEY)
+}
+
 export async function verifyAuth(token: string) {
   try {
-    console.log('Verifying token:', token.substring(0, 20) + '...')
     const verified = await jwtVerify(token, secret)
-    console.log('Token payload:', verified.payload)
     
     if (!verified.payload || !verified.payload.email) {
       throw new Error('Invalid token payload')
@@ -18,13 +23,11 @@ export async function verifyAuth(token: string) {
     
     return verified.payload
   } catch (err) {
-    console.error('Token verification failed:', err)
     throw new Error('Invalid token')
   }
 }
 
 export async function signAuth(payload: any) {
-  console.log('Creating token with payload:', payload)
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
