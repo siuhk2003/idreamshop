@@ -58,7 +58,23 @@ export async function POST(request: Request) {
 
     // Create order with e-transfer payment method
     const order = await prisma.$transaction(async (tx) => {
-      // Update stock
+      // Create shipping info first
+      const createdShippingInfo = await tx.shippingInfo.create({
+        data: {
+          firstName: shippingInfo.firstName,
+          lastName: shippingInfo.lastName,
+          email: shippingInfo.email,
+          address: shippingInfo.address,
+          apartment: shippingInfo.apartment,
+          city: shippingInfo.city,
+          province: shippingInfo.province,
+          postalCode: shippingInfo.postalCode,
+          phone: shippingInfo.phone,
+          country: shippingInfo.country || 'Canada'
+        }
+      })
+
+      // Update stock and create order
       for (const item of items) {
         await tx.product.update({
           where: { id: item.id },
@@ -68,34 +84,26 @@ export async function POST(request: Request) {
         })
       }
 
-      // Create order
+      // Create order with the shipping info reference
       const order = await tx.order.create({
         data: {
           orderNumber: `ORD-${Date.now()}`,
           status: 'PROCESSING',
+          paymentMethod: 'etransfer',
           paymentIntentId: `et_${crypto.randomUUID()}`,
           subtotal: totals.subtotal,
           gst: totals.gst,
           pst: totals.pst,
           total: totals.total,
+          shippingInfo: {
+            connect: { id: createdShippingInfo.id }
+          },
           items: {
             create: items.map(item => ({
               productId: item.id,
               quantity: item.quantity,
               price: item.price
             }))
-          },
-          shippingInfo: {
-            create: {
-              ...shippingInfo,
-              country: shippingInfo.country || 'Canada'
-            }
-          },
-          statusHistory: {
-            create: {
-              status: 'PROCESSING',
-              notes: 'Order placed, awaiting e-transfer payment'
-            }
           }
         },
         include: {
@@ -112,32 +120,41 @@ export async function POST(request: Request) {
         }
       })
 
-      // Send confirmation email
-      try {
-        await sendEmail({
-          to: shippingInfo.email,
-          subject: `Order Confirmation #${order.orderNumber}`,
-          html: getOrderConfirmationEmail({
-            orderNumber: order.orderNumber,
-            items: order.items.map(item => ({
-              quantity: item.quantity,
-              price: item.price,
-              product: { name: item.product.name }
-            })),
-            shippingInfo: shippingInfo,
-            subtotal: order.subtotal,
-            gst: order.gst,
-            pst: order.pst,
-            total: order.total,
-            paymentMethod: 'etransfer'
-          })
-        })
-      } catch (emailError) {
-        console.error('Failed to send confirmation email:', emailError)
-      }
+      // Create status history
+      await tx.statusHistory.create({
+        data: {
+          orderId: order.id,
+          status: 'PROCESSING',
+          notes: 'Order placed, awaiting e-transfer payment'
+        }
+      })
 
       return order
     })
+
+    // Send confirmation email outside transaction
+    try {
+      await sendEmail({
+        to: shippingInfo.email,
+        subject: `Order Confirmation #${order.orderNumber}`,
+        html: getOrderConfirmationEmail({
+          orderNumber: order.orderNumber,
+          items: order.items.map(item => ({
+            quantity: item.quantity,
+            price: item.price,
+            product: { name: item.product.name }
+          })),
+          shippingInfo: shippingInfo,
+          subtotal: order.subtotal,
+          gst: order.gst,
+          pst: order.pst,
+          total: order.total,
+          paymentMethod: 'etransfer'
+        })
+      })
+    } catch (emailError) {
+      console.error('Failed to send confirmation email:', emailError)
+    }
 
     return NextResponse.json({
       success: true,

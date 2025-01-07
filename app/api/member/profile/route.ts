@@ -1,119 +1,116 @@
 import { NextResponse } from 'next/server'
-import { jwtVerify } from 'jose'
-import { getJwtSecretKey } from '@/lib/auth'
+import { headers } from 'next/headers'
+import { verifyAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { cookies } from 'next/headers'
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const token = (await cookies()).get('member-token')?.value
+    const headersList = await headers()
+    const cookieHeader = headersList.get('cookie')
+    const tokenMatch = cookieHeader?.match(/member-token=([^;]+)/)
+    const token = tokenMatch?.[1]
 
     if (!token) {
       return NextResponse.json(
-        { error: 'Not authenticated' },
+        { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    // Verify the token
-    const verified = await jwtVerify(
-      token,
-      getJwtSecretKey()
-    )
+    try {
+      const payload = await verifyAuth(token)
+      const memberEmail = payload.email as string
 
-    if (!verified.payload || !verified.payload.email) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      )
-    }
+      const member = await prisma.member.findUnique({
+        where: { email: memberEmail },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          address: true,
+          apartment: true,
+          city: true,
+          province: true,
+          postalCode: true,
+          phone: true
+        }
+      })
 
-    // Fetch member profile from database
-    const member = await prisma.member.findUnique({
-      where: { email: verified.payload.email as string },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        address: true,
-        apartment: true,
-        city: true,
-        province: true,
-        postalCode: true,
-        country: true,
-        phone: true,
-        isVerified: true
+      if (!member) {
+        return NextResponse.json(
+          { error: 'Member not found' },
+          { status: 404 }
+        )
       }
-    })
 
-    if (!member) {
+      return NextResponse.json({
+        success: true,
+        member
+      })
+
+    } catch (jwtError) {
       return NextResponse.json(
-        { error: 'Member not found' },
-        { status: 404 }
+        { error: 'Session expired' },
+        { status: 401 }
       )
     }
-
-    return NextResponse.json({ 
-      success: true,
-      member
-    })
 
   } catch (error) {
     console.error('Profile error:', error)
     return NextResponse.json(
-      { error: 'Not authenticated' },
-      { status: 401 }
+      { error: 'Failed to fetch profile' },
+      { status: 500 }
     )
   }
 }
 
 export async function PATCH(request: Request) {
   try {
-    const token = (await cookies()).get('member-token')?.value
+    const headersList = await headers()
+    const cookieHeader = headersList.get('cookie')
+    const tokenMatch = cookieHeader?.match(/member-token=([^;]+)/)
+    const token = tokenMatch?.[1]
 
     if (!token) {
       return NextResponse.json(
-        { error: 'Not authenticated' },
+        { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    // Verify the token
-    const verified = await jwtVerify(
-      token,
-      getJwtSecretKey()
-    )
+    try {
+      const payload = await verifyAuth(token)
+      const body = await request.json()
+      
+      const updatedMember = await prisma.member.update({
+        where: { email: payload.email as string },
+        data: body,
+        select: {
+          email: true,
+          firstName: true,
+          lastName: true,
+          address: true,
+          apartment: true,
+          city: true,
+          province: true,
+          postalCode: true,
+          phone: true,
+        }
+      })
 
-    if (!verified.payload || !verified.payload.email) {
+      return NextResponse.json({ 
+        success: true,
+        member: updatedMember 
+      })
+
+    } catch (jwtError) {
       return NextResponse.json(
-        { error: 'Invalid token' },
+        { error: 'Session expired' },
         { status: 401 }
       )
     }
-
-    const body = await request.json()
-    const updatedMember = await prisma.member.update({
-      where: { email: verified.payload.email as string },
-      data: body,
-      select: {
-        email: true,
-        firstName: true,
-        lastName: true,
-        address: true,
-        apartment: true,
-        city: true,
-        province: true,
-        postalCode: true,
-        country: true,
-        phone: true,
-      }
-    })
-
-    return NextResponse.json({ 
-      success: true,
-      member: updatedMember 
-    })
 
   } catch (error) {
     console.error('Profile update error:', error)

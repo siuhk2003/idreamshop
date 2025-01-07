@@ -42,12 +42,12 @@ export function MemberLinks() {
   if (isLoggedIn) {
     return (
       <ul className="space-y-2">
-        <li><Link href="/profile" className="text-gray-400 hover:text-white">My Profile</Link></li>
-        <li><Link href="/orders/history" className="text-gray-400 hover:text-white">Order History</Link></li>
+        <li><Link href="/profile" className="text-gray-600 hover:text-gray-800">My Profile</Link></li>
+        <li><Link href="/orders" className="text-gray-600 hover:text-gray-800">My Orders</Link></li>
         <li>
           <button 
             onClick={handleLogout}
-            className="text-gray-400 hover:text-white"
+            className="text-gray-600 hover:text-gray-800"
           >
             Logout
           </button>
@@ -58,10 +58,8 @@ export function MemberLinks() {
 
   return (
     <ul className="space-y-2">
-      <li><Link href="/login" className="text-gray-400 hover:text-white">Member Login</Link></li>
-      <li><Link href="/register" className="text-gray-400 hover:text-white">Register</Link></li>
-      <li><Link href="/profile" className="text-gray-400 hover:text-white">My Profile</Link></li>
-      <li><Link href="/orders/history" className="text-gray-400 hover:text-white">Order History</Link></li>
+      <li><Link href="/login" className="text-gray-600 hover:text-gray-800">Member Login</Link></li>
+      <li><Link href="/register" className="text-gray-600 hover:text-gray-800">Register</Link></li>
     </ul>
   )
 } 

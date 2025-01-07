@@ -5,21 +5,22 @@ import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js'
 import { Button } from './ui/button'
 import { useRouter } from 'next/navigation'
 
+interface ShippingInfo {
+  firstName: string
+  lastName: string
+  email: string
+  address: string
+  apartment?: string
+  city: string
+  province: string
+  postalCode: string
+  phone: string
+}
+
 interface PaymentFormProps {
   amount: number
   onSuccess: (paymentIntentId: string) => Promise<boolean>
-  shippingInfo: {
-    firstName: string
-    lastName: string
-    email: string
-    address: string
-    apartment?: string
-    city: string
-    province: string
-    postalCode: string
-    country: string
-    phone: string
-  }
+  shippingInfo: ShippingInfo
 }
 
 export function PaymentForm({ amount, onSuccess, shippingInfo }: PaymentFormProps) {

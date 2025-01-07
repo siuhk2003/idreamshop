@@ -91,11 +91,11 @@ export function MemberMenu() {
               My Profile
             </Link>
             <Link
-              href="/orders/history"
+              href="/orders"
               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               onClick={() => setIsOpen(false)}
             >
-              Order History
+              My Orders
             </Link>
             <button
               onClick={handleLogout}

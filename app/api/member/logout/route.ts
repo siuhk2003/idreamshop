@@ -3,13 +3,13 @@ import { NextResponse } from 'next/server'
 export async function POST() {
   const response = NextResponse.json({ success: true })
   
-  // Clear only member token
+  // Clear the member token cookie
   response.cookies.set('member-token', '', {
-    expires: new Date(0),
-    path: '/',
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax'
+    sameSite: 'lax',
+    path: '/',
+    expires: new Date(0) // Immediately expire the cookie
   })
 
   return response

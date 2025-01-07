@@ -19,11 +19,10 @@ interface ShippingInfo {
   lastName: string
   email: string
   address: string
-  apartment: string
+  apartment?: string
   city: string
   province: string
   postalCode: string
-  country: string
   phone: string
 }
 
@@ -81,7 +80,6 @@ export default function CheckoutPage() {
     city: '',
     province: 'British Columbia',
     postalCode: '',
-    country: 'Canada',
     phone: ''
   })
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -195,33 +193,36 @@ export default function CheckoutPage() {
     checkLoginStatus()
   }, [])
 
-  const loadProfileInfo = async () => {
+  const fetchShippingInfo = async () => {
     try {
       const response = await fetch('/api/member/shipping-info', {
         credentials: 'include'
       })
 
       if (!response.ok) {
-        throw new Error('Failed to load profile information')
+        if (response.status === 401) {
+          // Handle unauthorized - optionally redirect to login
+          return
+        }
+        throw new Error('Failed to fetch shipping info')
       }
 
-      const { member } = await response.json()
-      
-      setShippingInfo({
-        firstName: member.firstName,
-        lastName: member.lastName,
-        email: member.email,
-        address: member.address,
-        apartment: member.apartment || '',
-        city: member.city,
-        province: member.province,
-        postalCode: member.postalCode,
-        country: 'Canada',
-        phone: member.phone || ''
-      })
+      const data = await response.json()
+      if (data.success && data.shippingInfo) {
+        setShippingInfo({
+          firstName: data.shippingInfo.firstName || '',
+          lastName: data.shippingInfo.lastName || '',
+          email: data.shippingInfo.email || '',
+          address: data.shippingInfo.address || '',
+          apartment: data.shippingInfo.apartment || '',
+          city: data.shippingInfo.city || '',
+          province: data.shippingInfo.province || '',
+          postalCode: data.shippingInfo.postalCode || '',
+          phone: data.shippingInfo.phone || ''
+        })
+      }
     } catch (error) {
-      console.error('Error loading profile:', error)
-      setError('Failed to load profile information')
+      console.error('Error fetching shipping info:', error)
     }
   }
 
@@ -294,7 +295,7 @@ export default function CheckoutPage() {
                 <h2 className="text-xl font-semibold">Shipping Information</h2>
                 {isLoggedIn && (
                   <Button
-                    onClick={loadProfileInfo}
+                    onClick={fetchShippingInfo}
                     variant="outline"
                     size="sm"
                     className="ml-4"

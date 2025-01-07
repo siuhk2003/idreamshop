@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { validateForm } from '@/lib/validation'
 
-interface MemberProfile {
+interface Profile {
   email: string
   firstName: string
   lastName: string
@@ -16,13 +16,12 @@ interface MemberProfile {
   city: string
   province: string
   postalCode: string
-  country: string
   phone: string
 }
 
 export default function ProfilePage() {
   const router = useRouter()
-  const [profile, setProfile] = useState<MemberProfile | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [editing, setEditing] = useState(false)
@@ -32,29 +31,33 @@ export default function ProfilePage() {
   const [passwordSuccess, setPasswordSuccess] = useState(false)
 
   useEffect(() => {
-    fetchProfile()
-  }, [])
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch('/api/member/profile', {
+          credentials: 'include'
+        })
 
-  const fetchProfile = async () => {
-    try {
-      const response = await fetch('/api/member/profile')
-      
-      if (!response.ok) {
         if (response.status === 401) {
-          router.push('/login')
+          router.push('/login?redirect=/profile')
           return
         }
-        throw new Error('Failed to fetch profile')
-      }
 
-      const data = await response.json()
-      setProfile(data.member)
-    } catch (err) {
-      setError('Failed to load profile')
-    } finally {
-      setLoading(false)
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load profile')
+        }
+
+        setProfile(data.member)
+      } catch (err) {
+        setError('Failed to load profile')
+        console.error('Profile fetch error:', err)
+      } finally {
+        setLoading(false)
+      }
     }
-  }
+
+    fetchProfile()
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -274,18 +277,6 @@ export default function ProfilePage() {
                     type="text"
                     name="postalCode"
                     defaultValue={profile.postalCode}
-                    disabled={!editing}
-                    required
-                    className="w-full border p-2 rounded"
-                  />
-                </div>
-
-                <div>
-                  <label className="block mb-1">Country</label>
-                  <input
-                    type="text"
-                    name="country"
-                    defaultValue={profile.country}
                     disabled={!editing}
                     required
                     className="w-full border p-2 rounded"

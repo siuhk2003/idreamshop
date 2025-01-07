@@ -1,13 +1,30 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
 import { Cart } from '@/components/Cart'
 import { MemberMenu } from '@/components/MemberMenu'
+import { useRouter } from 'next/navigation'
 
 type HeaderProps = {
   variant?: 'default' | 'home'
 }
 
 export function Header({ variant = 'default' }: HeaderProps) {
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/member/logout', {
+        method: 'POST',
+        credentials: 'include'
+      })
+      router.push('/login')
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
+  }
+
   return (
     <header className={`${
       variant === 'home' ? 'bg-transparent' : 'bg-sky-50'

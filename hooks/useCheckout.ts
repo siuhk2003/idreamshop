@@ -2,6 +2,18 @@ import { useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
 
+interface ShippingInfo {
+  firstName: string
+  lastName: string
+  email: string
+  address: string
+  apartment?: string
+  city: string
+  province: string
+  postalCode: string
+  phone: string
+}
+
 export function useCheckout(paymentIntentId: string | null) {
   const { clearCart, items } = useCart()
   const [error, setError] = useState<string | null>(null)
