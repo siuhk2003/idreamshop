@@ -1,11 +1,64 @@
+'use client'
+
+import { useState, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { Instagram, Facebook } from 'lucide-react'
+import ReCAPTCHA from "react-google-recaptcha"
 
 export default function ContactPage() {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+  const recaptchaRef = useRef<ReCAPTCHA>(null)
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    
+    if (!captchaToken) {
+      setError('Please complete the reCAPTCHA')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+
+    const formData = new FormData(e.currentTarget)
+    const data = {
+      name: formData.get('name'),
+      email: formData.get('email'),
+      message: formData.get('message'),
+      captchaToken
+    }
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+
+      if (response.ok) {
+        setSuccess(true)
+        formRef.current?.reset()
+        recaptchaRef.current?.reset()
+        setCaptchaToken(null)
+      } else {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to send message')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send message')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -16,7 +69,17 @@ export default function ContactPage() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <form className="space-y-4">
+              {success && (
+                <div className="bg-green-50 text-green-600 p-4 rounded mb-4">
+                  Message sent successfully! We'll get back to you within 5 business days.
+                </div>
+              )}
+              {error && (
+                <div className="bg-red-50 text-red-600 p-4 rounded mb-4">
+                  {error}
+                </div>
+              )}
+              <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
                   <Input type="text" id="name" name="name" required className="mt-1" />
@@ -29,7 +92,16 @@ export default function ContactPage() {
                   <label htmlFor="message" className="block text-sm font-medium text-gray-700">Message</label>
                   <Textarea id="message" name="message" rows={4} required className="mt-1" />
                 </div>
-                <Button type="submit">Send Message</Button>
+                <div className="mb-4">
+                  <ReCAPTCHA
+                    ref={recaptchaRef}
+                    sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+                    onChange={(token) => setCaptchaToken(token)}
+                  />
+                </div>
+                <Button type="submit" disabled={loading || !captchaToken}>
+                  {loading ? 'Sending...' : 'Send Message'}
+                </Button>
               </form>
             </div>
             

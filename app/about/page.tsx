@@ -10,13 +10,13 @@ export default function AboutPage() {
 
       <main className="flex-grow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <h2 className="text-3xl font-extrabold text-gray-900 mb-8">About BC Accessories</h2>
+          <h2 className="text-3xl font-extrabold text-gray-900 mb-8">About idream</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
             <div>
               <Image
-                src="/placeholder.svg?height=400&width=600&text=Our+Team"
-                alt="Our Team"
+                src="/TFN.jpg"
+                alt="Our Community"
                 width={600}
                 height={400}
                 className="rounded-lg object-cover w-full h-full"
@@ -25,13 +25,15 @@ export default function AboutPage() {
             <div className="flex flex-col justify-center">
               <h3 className="text-2xl font-bold mb-4">Our Mission</h3>
               <p className="text-gray-600 mb-4">
-                At BC Accessories, our mission is to empower individuals to express their unique style through high-quality,
-                locally-crafted hair accessories. We believe that the right accessory can elevate any outfit and boost confidence,
-                allowing our customers to shine in their everyday lives.
+                At iDream, our mission is to inspire confidence and individuality by offering high-quality, stylish
+                accessories to our local community. We believe that every accessory tells a story, and the right piece
+                can transform an outfit, uplift a mood, and empower self-expression.
               </p>
               <p className="text-gray-600">
-                As a proud British Columbia-based business, we are committed to supporting local artisans and promoting
-                sustainable fashion practices that respect our beautiful environment.
+                As a proud British Columbia-based brand, we are dedicated to supporting local artisans and
+                promoting sustainable fashion practices. With a commitment to quality and care for our
+                environment, we aim to bring joy, beauty, and a touch of elegance to everyday life through our
+                thoughtfully crafted collections.
               </p>
             </div>
           </div>
@@ -42,7 +44,7 @@ export default function AboutPage() {
               <Card>
                 <CardContent className="p-6">
                   <h4 className="text-xl font-semibold mb-2">Quality Craftsmanship</h4>
-                  <p className="text-gray-600">Deliver exceptional, handcrafted accessories that stand the test of time.</p>
+                  <p className="text-gray-600">Deliver exceptional, thoughtfully designed accessories that stand the test of time.</p>
                 </CardContent>
               </Card>
               <Card>
@@ -65,23 +67,27 @@ export default function AboutPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
               <div>
                 <p className="text-gray-600 mb-4">
-                  Founded in 2015 by Jane Doe, BC Accessories began as a small passion project in a cozy Vancouver apartment.
-                  Inspired by the natural beauty of British Columbia and the vibrant local fashion scene, Jane set out to create
-                  hair accessories that were both stylish and meaningful.
+                  At iDream, our journey began as immigrants from Hong Kong, bringing with us a rich heritage of
+                  experience in fashion and accessories. Having recently made British Columbia our new home, we are
+                  inspired by the vibrant local community and its appreciation for individuality and style.
+                </p>
+                <p className="text-gray-600 mb-4">
+                  With years of expertise in curating and designing beautiful accessories, we are excited to share our
+                  passion with our new neighbors. Our goal is to contribute to the community by offering thoughtfully
+                  selected pieces that enhance everyday moments and celebrate personal expression.
                 </p>
                 <p className="text-gray-600">
-                  Today, BC Accessories has grown into a thriving business, collaborating with talented local artisans and
-                  serving customers across the province and beyond. We remain committed to our roots, focusing on quality,
-                  creativity, and community in everything we do.
+                  We hope our creations bring a little joy, confidence, and elegance into your life—because at iDream,
+                  selected pieces that enhance everyday moments and celebrate personal expression.
                 </p>
               </div>
-              <div>
+              <div className="flex justify-center">
                 <Image
-                  src="/placeholder.svg?height=400&width=600&text=Our+Workshop"
-                  alt="Our Workshop"
-                  width={600}
+                  src="/story.webp"
+                  alt="Our story"
+                  width={400}
                   height={400}
-                  className="rounded-lg object-cover w-full h-full"
+                  className="rounded-lg object-cover"
                 />
               </div>
             </div>
