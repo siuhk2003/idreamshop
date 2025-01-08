@@ -17,41 +17,82 @@ interface Product {
   stock: number
 }
 
+const ITEMS_PER_PAGE = 8
+
 export function ProductGrid() {
   const searchParams = useSearchParams()
   const category = searchParams.get('category') || 'all'
-  const [visibleItems, setVisibleItems] = useState(9)
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  const [state, setState] = useState({
+    currentPage: 1,
+    products: [] as Product[],
+    loading: true
+  })
 
   useEffect(() => {
+    console.log('Effect triggered, category:', category)
     const fetchProducts = async () => {
-      setLoading(true)
+      setState(prev => ({ ...prev, loading: true }))
       try {
+        console.log('Fetching products...')
         const response = await fetch(`/api/products?category=${category}`)
         const data = await response.json()
-        setProducts(data)
+        console.log('Received data:', data)
+        
+        if (data.success) {
+          setState({
+            currentPage: 1,
+            products: data.products,
+            loading: false
+          })
+          console.log('State updated with products:', data.products.length)
+        } else {
+          throw new Error(data.error)
+        }
       } catch (error) {
         console.error('Failed to fetch products:', error)
+        setState(prev => ({ ...prev, loading: false }))
       }
-      setLoading(false)
     }
 
     fetchProducts()
   }, [category])
 
-  const showMore = () => {
-    setVisibleItems(prevVisible => Math.min(prevVisible + 9, products.length))
-  }
+  useEffect(() => {
+    console.log('State changed:', {
+      currentPage: state.currentPage,
+      productsCount: state.products.length,
+      loading: state.loading
+    })
+  }, [state])
 
-  if (loading) {
+  if (state.loading) {
     return <div>Loading...</div>
   }
 
+  const totalPages = Math.ceil(state.products.length / ITEMS_PER_PAGE)
+  const paginatedProducts = state.products.slice(
+    (state.currentPage - 1) * ITEMS_PER_PAGE,
+    state.currentPage * ITEMS_PER_PAGE
+  )
+
+  const changePage = (newPage: number) => {
+    setState(prev => ({ ...prev, currentPage: newPage }))
+  }
+
+  console.log('Pagination Info:', {
+    totalProducts: state.products.length,
+    currentPage: state.currentPage,
+    totalPages,
+    itemsPerPage: ITEMS_PER_PAGE,
+    paginatedProductsCount: paginatedProducts.length,
+    sliceStart: (state.currentPage - 1) * ITEMS_PER_PAGE,
+    sliceEnd: state.currentPage * ITEMS_PER_PAGE
+  })
+
   return (
-    <div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {products.slice(0, visibleItems).map((product) => (
+    <div className="bg-white p-6 rounded-lg shadow">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        {paginatedProducts.map((product) => (
           <Link href={`/products/${product.id}`} key={product.id}>
             <Card className="transition-transform hover:scale-105">
               <CardContent className="p-4">
@@ -83,10 +124,25 @@ export function ProductGrid() {
           </Link>
         ))}
       </div>
-      {visibleItems < products.length && (
-        <div className="mt-12 text-center">
-          <Button onClick={showMore} variant="outline" size="lg">
-            Load More
+
+      {totalPages > 1 && (
+        <div className="mt-8 flex justify-center gap-4">
+          <Button
+            variant="outline"
+            onClick={() => changePage(Math.max(1, state.currentPage - 1))}
+            disabled={state.currentPage === 1}
+          >
+            Previous
+          </Button>
+          <span className="flex items-center">
+            Page {state.currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => changePage(Math.min(totalPages, state.currentPage + 1))}
+            disabled={state.currentPage === totalPages}
+          >
+            Next
           </Button>
         </div>
       )}

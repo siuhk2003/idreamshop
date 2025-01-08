@@ -1,15 +1,13 @@
 'use client'
+
 import { Suspense } from 'react'
 import dynamic from 'next/dynamic'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { ProductGrid } from './product-grid'
 
 const FilterSidebar = dynamic(
   () => import('./filter-sidebar').then(mod => mod.FilterSidebar),
-  { ssr: false }
-)
-const ProductsSearchHandler = dynamic(
-  () => import('./products-search-handler').then(mod => mod.default),
   { ssr: false }
 )
 
@@ -23,12 +21,9 @@ export default function ProductsPage() {
             <FilterSidebar />
           </Suspense>
           <div className="flex-1">
-            <Suspense fallback={
-              <div className="flex justify-center items-center h-64">
-                <p>Loading products...</p>
-              </div>
-            }>
-              <ProductsSearchHandler />
+            <h1 className="text-3xl font-bold mb-8">Our Products</h1>
+            <Suspense fallback={<div>Loading products...</div>}>
+              <ProductGrid />
             </Suspense>
           </div>
         </div>

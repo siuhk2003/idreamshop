@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Upload } from 'lucide-react'
 
 const CATEGORIES = ['new', 'regular', 'clearance'] as const
 type Category = typeof CATEGORIES[number]
@@ -49,6 +50,7 @@ export default function ProductsPage() {
     stock: 0
   })
   const [showAddForm, setShowAddForm] = useState(false)
+  const [importing, setImporting] = useState(false)
 
   useEffect(() => {
     fetchProducts()
@@ -159,6 +161,45 @@ export default function ProductsPage() {
     }
   }
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) {
+      console.log('No file selected')
+      return
+    }
+
+    console.log('File selected:', file.name)
+    setImporting(true)
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      console.log('Sending request to import API...')
+      const response = await fetch('/api/admin/products/import', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      console.log('Response received:', response.status)
+      const data = await response.json()
+      console.log('Response data:', data)
+      
+      if (response.ok) {
+        alert(`Successfully imported ${data.count} products`)
+        fetchProducts()
+      } else {
+        throw new Error(data.error || 'Import failed')
+      }
+    } catch (error) {
+      console.error('Import error:', error)
+      alert(error instanceof Error ? error.message : 'Failed to import products')
+    } finally {
+      setImporting(false)
+      event.target.value = ''
+    }
+  }
+
   const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE)
   const paginatedProducts = products.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -172,9 +213,28 @@ export default function ProductsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Products ({products.length})</h1>
-        <Button onClick={() => setShowAddForm(!showAddForm)}>
-          {showAddForm ? 'Cancel Add' : 'Add New Product'}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="flex items-center gap-2"
+            disabled={importing}
+            onClick={() => document.getElementById('file-upload')?.click()}
+          >
+            <Upload className="w-4 h-4" />
+            {importing ? 'Importing...' : 'Import Excel'}
+          </Button>
+          <input
+            id="file-upload"
+            type="file"
+            accept=".xlsx,.xls"
+            className="hidden"
+            onChange={handleFileUpload}
+            disabled={importing}
+          />
+          <Button onClick={() => setShowAddForm(!showAddForm)}>
+            {showAddForm ? 'Cancel Add' : 'Add New Product'}
+          </Button>
+        </div>
       </div>
 
       {showAddForm && (

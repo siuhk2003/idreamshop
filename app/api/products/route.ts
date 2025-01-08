@@ -13,25 +13,21 @@ export async function GET(request: Request) {
     switch (category) {
       case 'new':
         whereClause = {
-          category: 'new'  // Match products with category 'new'
+          category: 'new'
         }
         break
 
       case 'clearance':
         whereClause = {
-          category: 'clearance'  // Match products with category 'clearance'
+          category: 'clearance'
         }
         break
 
       case 'all':
       default:
-        // No filter needed for 'all'
         break
     }
 
-    console.log('Using where clause:', JSON.stringify(whereClause, null, 2))
-
-    // Fetch products using the same structure as home page
     const products = await prisma.product.findMany({
       where: whereClause,
       select: {
@@ -53,7 +49,11 @@ export async function GET(request: Request) {
       }
     })
 
-    console.log(`Found ${products.length} products for category: ${category}`)
+    console.log('API Response:', {
+      success: true,
+      products: products.length,
+      firstProduct: products[0]
+    })
 
     return NextResponse.json({ 
       success: true,
