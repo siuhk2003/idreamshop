@@ -137,3 +137,12 @@ model PasswordResetToken {
   expires   DateTime
   createdAt DateTime @default(now())
 }
+
+model ShippingRate {
+  id        String   @id @default(cuid()) @map("_id")
+  minItems  Int
+  maxItems  Int?     // null means no upper limit
+  cost      Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -86,11 +86,12 @@ export default function CheckoutPage() {
   const [fieldErrors, setFieldErrors] = useState<FormErrors>({})
   const [validationErrors, setValidationErrors] = useState<FormErrors>({})
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'etransfer'>('stripe')
+  const [shippingCost, setShippingCost] = useState(0)
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const gst = subtotal * GST_RATE
   const pst = subtotal * PST_RATE
-  const total = subtotal + gst + pst
+  const total = subtotal + gst + pst + shippingCost
 
   const checkStock = async (items: CartItem[]) => {
     try {
@@ -281,6 +282,24 @@ export default function CheckoutPage() {
       setError(error instanceof Error ? error.message : 'Checkout failed')
     }
   }
+
+  useEffect(() => {
+    const fetchShippingCost = async () => {
+      try {
+        const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
+        const response = await fetch(`/api/shipping-cost?items=${totalItems}`)
+        const data = await response.json()
+        
+        if (data.success) {
+          setShippingCost(data.cost)
+        }
+      } catch (error) {
+        console.error('Failed to fetch shipping cost:', error)
+      }
+    }
+
+    fetchShippingCost()
+  }, [items])
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -533,6 +552,10 @@ export default function CheckoutPage() {
                     <div className="flex justify-between text-sm">
                       <span>PST (7%)</span>
                       <span>${pst.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Shipping</span>
+                      <span>${shippingCost.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between font-bold text-lg border-t pt-2">
                       <span>Total</span>
