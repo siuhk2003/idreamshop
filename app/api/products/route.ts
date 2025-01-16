@@ -5,70 +5,41 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category') || 'all'
-    console.log('Received request for category:', category)
 
     let whereClause = {}
-
-    // Handle different categories
-    switch (category) {
-      case 'new':
-        whereClause = {
-          category: 'new'
-        }
-        break
-
-      case 'clearance':
-        whereClause = {
-          category: 'clearance'
-        }
-        break
-
-      case 'all':
-      default:
-        break
+    if (category !== 'all') {
+      whereClause = { category }
     }
 
+    // Get all products
     const products = await prisma.product.findMany({
       where: whereClause,
+      orderBy: { createdAt: 'desc' },
       select: {
         id: true,
+        styleCode: true,
+        sku: true,
         name: true,
-        description: true,
         price: true,
         originalPrice: true,
-        wholesalePrice: true,
-        imageUrl: true,
         category: true,
-        stock: true,
-        createdAt: true,
+        imageUrl: true,
         color: true,
+        stock: true,
+        description: true,
         material: true
-      },
-      orderBy: {
-        createdAt: 'desc'
       }
-    })
-
-    console.log('API Response:', {
-      success: true,
-      products: products.length,
-      firstProduct: products[0]
     })
 
     return NextResponse.json({ 
       success: true,
-      products 
+      products
     })
 
   } catch (error) {
     console.error('Products fetch error:', error)
     return NextResponse.json(
-      { 
-        error: 'Failed to fetch products',
-        details: process.env.NODE_ENV === 'development' ? 
-          (error instanceof Error ? error.message : 'Unknown error') 
-          : undefined
-      },
+      { error: 'Failed to fetch products' },
       { status: 500 }
     )
   }

@@ -2,18 +2,19 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import Image from 'next/image'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import Link from 'next/link'
+import { ProductCard } from "@/components/ProductCard"
 
 interface Product {
   id: string
+  styleCode: string
+  sku: string
   name: string
   price: number
-  originalPrice?: number | null
-  imageUrl: string
+  originalPrice: number | null
   category: string
+  imageUrl: string
+  color: string
   stock: number
 }
 
@@ -29,14 +30,11 @@ export function ProductGrid() {
   })
 
   useEffect(() => {
-    console.log('Effect triggered, category:', category)
     const fetchProducts = async () => {
       setState(prev => ({ ...prev, loading: true }))
       try {
-        console.log('Fetching products...')
         const response = await fetch(`/api/products?category=${category}`)
         const data = await response.json()
-        console.log('Received data:', data)
         
         if (data.success) {
           setState({
@@ -44,7 +42,6 @@ export function ProductGrid() {
             products: data.products,
             loading: false
           })
-          console.log('State updated with products:', data.products.length)
         } else {
           throw new Error(data.error)
         }
@@ -56,14 +53,6 @@ export function ProductGrid() {
 
     fetchProducts()
   }, [category])
-
-  useEffect(() => {
-    console.log('State changed:', {
-      currentPage: state.currentPage,
-      productsCount: state.products.length,
-      loading: state.loading
-    })
-  }, [state])
 
   if (state.loading) {
     return <div>Loading...</div>
@@ -79,49 +68,15 @@ export function ProductGrid() {
     setState(prev => ({ ...prev, currentPage: newPage }))
   }
 
-  console.log('Pagination Info:', {
-    totalProducts: state.products.length,
-    currentPage: state.currentPage,
-    totalPages,
-    itemsPerPage: ITEMS_PER_PAGE,
-    paginatedProductsCount: paginatedProducts.length,
-    sliceStart: (state.currentPage - 1) * ITEMS_PER_PAGE,
-    sliceEnd: state.currentPage * ITEMS_PER_PAGE
-  })
-
   return (
     <div className="bg-white p-6 rounded-lg shadow">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {paginatedProducts.map((product) => (
-          <Link href={`/products/${product.id}`} key={product.id}>
-            <Card className="transition-transform hover:scale-105">
-              <CardContent className="p-4">
-                <Image
-                  src={product.imageUrl}
-                  alt={product.name}
-                  width={300}
-                  height={300}
-                  className="w-full h-[200px] object-cover rounded-t-lg"
-                />
-                <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
-                <div className="flex items-center gap-2">
-                  <p className={`font-bold ${product.category === 'clearance' ? 'text-red-600' : 'text-gray-900'}`}>
-                    ${product.price.toFixed(2)}
-                  </p>
-                  {product.originalPrice && (
-                    <p className="text-gray-500 line-through">${product.originalPrice.toFixed(2)}</p>
-                  )}
-                </div>
-                <Button 
-                  className="w-full mt-4 bg-blue-500 text-white hover:bg-blue-600"
-                  disabled={product.stock === 0}
-                  onClick={(e) => e.preventDefault()}
-                >
-                  {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
-                </Button>
-              </CardContent>
-            </Card>
-          </Link>
+          <ProductCard
+            key={product.id}
+            {...product}
+            isClearance={product.category === 'clearance'}
+          />
         ))}
       </div>
 

@@ -94,7 +94,13 @@ export async function POST(request: Request) {
       console.log('Order data:', {
         orderNumber: `ORD-${Date.now()}`,
         status: 'PROCESSING',
-        totals,
+        totals: {
+          subtotal: totals.subtotal,
+          shipping: totals.shipping,
+          gst: totals.gst,
+          pst: totals.pst,
+          total: totals.total
+        },
         items: items.map((item: CartItem) => ({
           productId: item.id,
           quantity: item.quantity,
@@ -112,6 +118,8 @@ export async function POST(request: Request) {
           pst: totals.pst,
           total: totals.total,
           paymentIntentId,
+          paymentMethod: 'stripe',
+          shippingCost: totals.shipping || 0,
           items: {
             create: items.map((item: CartItem) => ({
               productId: item.id,
@@ -160,17 +168,11 @@ export async function POST(request: Request) {
               product: { name: item.product.name }
             })),
             shippingInfo: {
-              firstName: order.shippingInfo.firstName,
-              lastName: order.shippingInfo.lastName,
-              email: order.shippingInfo.email,
-              address: order.shippingInfo.address,
-              apartment: order.shippingInfo.apartment || undefined,
-              city: order.shippingInfo.city,
-              province: order.shippingInfo.province,
-              postalCode: order.shippingInfo.postalCode,
-              phone: order.shippingInfo.phone
+              ...order.shippingInfo,
+              apartment: order.shippingInfo.apartment || undefined
             },
             subtotal: order.subtotal,
+            shipping: order.shippingCost,
             gst: order.gst,
             pst: order.pst,
             total: order.total
@@ -207,19 +209,13 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('=== Checkout Error ===')
-    console.error('Error details:', error)
-    
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to process checkout'
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    )
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error')
+
+    return NextResponse.json({ 
+      success: false,
+      error: error instanceof Error ? error.message : 'Checkout failed'
+    }, { 
+      status: 500 
+    })
   }
 } 

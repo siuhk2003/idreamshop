@@ -28,6 +28,8 @@ interface Product {
   category: Category
   stock: number
   wholesalePrice?: number | null
+  sku: string
+  styleCode: string
 }
 
 const ITEMS_PER_PAGE = 10
@@ -47,7 +49,9 @@ export default function ProductsPage() {
     originalPrice: null,
     imageUrl: '',
     category: 'regular',
-    stock: 0
+    stock: 0,
+    sku: '',
+    styleCode: ''
   })
   const [showAddForm, setShowAddForm] = useState(false)
   const [importing, setImporting] = useState(false)
@@ -100,7 +104,9 @@ export default function ProductsPage() {
         price: 0,
         imageUrl: '',
         category: 'regular',
-        stock: 0
+        stock: 0,
+        sku: '',
+        styleCode: ''
       })
       setShowAddForm(false)
 
@@ -128,6 +134,8 @@ export default function ProductsPage() {
         stock: editForm.stock ? Number(editForm.stock) : undefined,
         category: editForm.category,
         imageUrl: editForm.imageUrl,
+        sku: editForm.sku,
+        styleCode: editForm.styleCode,
         // Only include originalPrice if category is clearance
         originalPrice: editForm.category === 'clearance' 
           ? Number(editForm.originalPrice) || Number(editForm.price)
@@ -326,6 +334,26 @@ export default function ProductsPage() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="sku">SKU</Label>
+                <Input
+                  id="sku"
+                  value={newProduct.sku || ''}
+                  onChange={e => setNewProduct({ ...newProduct, sku: e.target.value })}
+                  placeholder="SKU"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="variationCode">Variation Code</Label>
+                <Input
+                  id="variationCode"
+                  value={newProduct.styleCode || ''}
+                  onChange={e => setNewProduct({ ...newProduct, styleCode: e.target.value })}
+                  placeholder="Variation Code"
+                />
+              </div>
+
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setShowAddForm(false)}>
                   Cancel
@@ -452,6 +480,26 @@ export default function ProductsPage() {
                             ))}
                           </SelectContent>
                         </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="sku">SKU</Label>
+                        <Input
+                          id="sku"
+                          value={editForm.sku || ''}
+                          onChange={e => setEditForm({ ...editForm, sku: e.target.value })}
+                          placeholder="SKU"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="variationCode">Variation Code</Label>
+                        <Input
+                          id="styleCode"
+                          value={editForm.styleCode || ''}
+                          onChange={e => setEditForm({ ...editForm, styleCode: e.target.value })}
+                          placeholder="Variation Code"
+                        />
                       </div>
 
                       <div className="flex justify-end gap-2">

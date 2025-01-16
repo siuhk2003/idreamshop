@@ -1,5 +1,4 @@
 const { PrismaClient } = require('@prisma/client')
-
 const prisma = new PrismaClient()
 
 async function cleanup() {
@@ -13,11 +12,11 @@ async function cleanup() {
     await prisma.orderItem.deleteMany({})
     console.log('Deleted all order items')
 
-    await prisma.shippingInfo.deleteMany({})
-    console.log('Deleted all shipping info')
-
     await prisma.order.deleteMany({})
     console.log('Deleted all orders')
+
+    await prisma.product.deleteMany({})
+    console.log('Deleted all products')
 
     console.log('Cleanup completed successfully')
   } catch (error) {

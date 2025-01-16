@@ -21,6 +21,7 @@ interface CheckoutData {
   }
   totals: {
     subtotal: number
+    shipping: number
     gst: number
     pst: number
     total: number
@@ -92,6 +93,7 @@ export async function POST(request: Request) {
           paymentMethod: 'etransfer',
           paymentIntentId: `et_${crypto.randomUUID()}`,
           subtotal: totals.subtotal,
+          shippingCost: totals.shipping || 0,
           gst: totals.gst,
           pst: totals.pst,
           total: totals.total,
@@ -144,8 +146,12 @@ export async function POST(request: Request) {
             price: item.price,
             product: { name: item.product.name }
           })),
-          shippingInfo: shippingInfo,
+          shippingInfo: {
+            ...order.shippingInfo,
+            apartment: order.shippingInfo.apartment || undefined
+          },
           subtotal: order.subtotal,
+          shipping: order.shippingCost,
           gst: order.gst,
           pst: order.pst,
           total: order.total,

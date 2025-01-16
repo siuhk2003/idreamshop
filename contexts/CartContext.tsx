@@ -34,7 +34,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const addToCart = async (product: Product) => {
+  const addToCart = (product: Product & { quantity?: number }) => {
     setItems(currentItems => {
       const existingItem = currentItems.find(item => item.id === product.id)
       let newItems: CartItem[]
@@ -46,7 +46,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
         newItems = currentItems.map(item =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: item.quantity + (product.quantity || 1) }
             : item
         )
       } else {
@@ -55,7 +55,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           productId: product.id,
           name: product.name,
           price: product.price,
-          quantity: 1,
+          quantity: product.quantity || 1,
           imageUrl: product.imageUrl,
           stock: product.stock
         }

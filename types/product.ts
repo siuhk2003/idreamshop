@@ -4,11 +4,14 @@ export interface Product {
   description: string
   price: number
   originalPrice: number | null
+  wholesalePrice: number | null
   imageUrl: string
   category: string
   stock: number
-  color: string | null
+  color: string
   material: string | null
-  createdAt: Date
-  updatedAt: Date
+  styleCode: string
+  sku: string
+  quantity?: number
+  additionalImages?: string[]
 } 

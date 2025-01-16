@@ -3,8 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { headers } from 'next/headers'
 import { read, utils } from 'xlsx-js-style'
 
-const REQUIRED_HEADERS = ['name', 'description', 'price', 'category', 'stock']
-const OPTIONAL_HEADERS = ['originalPrice', 'wholesalePrice', 'imageUrl', 'color', 'material']
+const REQUIRED_HEADERS = ['name', 'description', 'price', 'category', 'stock', 'styleCode', 'sku']
+const OPTIONAL_HEADERS = ['originalPrice', 'wholesalePrice', 'imageUrl', 'color', 'material', 'variationCode']
 const VALID_CATEGORIES = ['new', 'regular', 'clearance']
 
 export const POST = async (request: Request) => {
@@ -74,7 +74,9 @@ export const POST = async (request: Request) => {
             category: row.category,
             stock: parseInt(row.stock),
             color: row.color || null,
-            material: row.material || null
+            material: row.material || null,
+            styleCode: row.styleCode,
+            sku: row.sku,
           }
         })
       })

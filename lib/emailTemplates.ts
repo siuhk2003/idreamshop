@@ -23,6 +23,7 @@ export function getOrderConfirmationEmail(order: {
   pst: number
   total: number
   paymentMethod?: string
+  shipping: number
 }) {
   const isETransfer = order.paymentMethod === 'etransfer'
 
@@ -62,6 +63,7 @@ export function getOrderConfirmationEmail(order: {
         
         <div style="margin-top: 20px; text-align: right;">
           <p>Subtotal: $${order.subtotal.toFixed(2)}</p>
+          <p>Shipping: $${order.shipping.toFixed(2)}</p>
           <p>GST (5%): $${order.gst.toFixed(2)}</p>
           <p>PST (7%): $${order.pst.toFixed(2)}</p>
           <p style="font-weight: bold; font-size: 1.2em;">Total: $${order.total.toFixed(2)}</p>

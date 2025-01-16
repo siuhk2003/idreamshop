@@ -63,11 +63,8 @@ export default async function Home() {
               {newArrivals.map((product: Product) => (
                 <ProductCard
                   key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  price={product.price}
-                  imageUrl={product.imageUrl}
-                  stock={product.stock}
+                  {...product}
+                  isClearance={product.category === 'clearance'}
                 />
               ))}
             </div>
@@ -80,11 +77,8 @@ export default async function Home() {
               {featuredProducts.map((product: Product) => (
                 <ProductCard
                   key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  price={product.price}
-                  imageUrl={product.imageUrl}
-                  stock={product.stock}
+                  {...product}
+                  isClearance={false}
                 />
               ))}
             </div>
@@ -104,13 +98,8 @@ export default async function Home() {
               {clearanceProducts.map((product: Product) => (
                 <ProductCard
                   key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  price={product.price}
-                  originalPrice={product.originalPrice}
-                  imageUrl={product.imageUrl}
+                  {...product}
                   isClearance={true}
-                  stock={product.stock}
                 />
               ))}
             </div>

@@ -87,6 +87,7 @@ export default function CheckoutPage() {
   const [validationErrors, setValidationErrors] = useState<FormErrors>({})
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'etransfer'>('stripe')
   const [shippingCost, setShippingCost] = useState(0)
+  const [clientSecret, setClientSecret] = useState('')
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const gst = subtotal * GST_RATE
@@ -167,7 +168,13 @@ export default function CheckoutPage() {
       // If all validations pass, proceed with payment
       const checkoutData = {
         shippingInfo,
-        totals: { subtotal, gst, pst, total }
+        totals: {
+          subtotal,
+          shipping: shippingCost,
+          gst,
+          pst,
+          total
+        }
       }
       localStorage.setItem('checkout_data', JSON.stringify(checkoutData))
       return true // Allow payment processing
@@ -251,10 +258,17 @@ export default function CheckoutPage() {
       }
 
       // Save checkout data
-      localStorage.setItem('checkout_data', JSON.stringify({
+      const checkoutData = {
         shippingInfo,
-        totals: { subtotal, gst, pst, total }
-      }))
+        totals: {
+          subtotal,
+          shipping: shippingCost,
+          gst,
+          pst,
+          total
+        }
+      }
+      localStorage.setItem('checkout_data', JSON.stringify(checkoutData))
 
       const response = await fetch('/api/checkout/etransfer', {
         method: 'POST',
@@ -262,7 +276,13 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           items,
           shippingInfo,
-          totals: { subtotal, gst, pst, total }
+          totals: { 
+            subtotal, 
+            shipping: shippingCost,
+            gst, 
+            pst, 
+            total 
+          }
         })
       })
 
@@ -300,6 +320,36 @@ export default function CheckoutPage() {
 
     fetchShippingCost()
   }, [items])
+
+  useEffect(() => {
+    if (!items.length) {
+      router.push('/cart?message=Your cart is empty')
+      return
+    }
+
+    const updatePaymentIntent = async () => {
+      try {
+        if (total <= 0) return
+
+        const response = await fetch('/api/create-payment-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: total })
+        })
+        const data = await response.json()
+        setClientSecret(data.clientSecret)
+      } catch (error) {
+        console.error('Error creating payment intent:', error)
+      }
+    }
+
+    updatePaymentIntent()
+  }, [items, total, router])
+
+  // Add early return if cart is empty
+  if (!items.length) {
+    return null // Return null while redirecting
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
