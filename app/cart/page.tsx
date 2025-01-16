@@ -1,11 +1,12 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { useCart } from '@/contexts/CartContext'
 
-export default function CartPage() {
+function CartContent() {
   const searchParams = useSearchParams()
   const message = searchParams.get('message')
   const { items } = useCart()
@@ -20,13 +21,11 @@ export default function CartPage() {
           </div>
         )}
 
-        {/* Rest of your cart content */}
         {items.length === 0 ? (
           <div className="text-center py-8">
             <p>Your cart is empty</p>
           </div>
         ) : (
-          // Your existing cart items display
           <div>
             {/* Cart items */}
           </div>
@@ -34,5 +33,21 @@ export default function CartPage() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function CartPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow container mx-auto px-4 py-8">
+          <div>Loading...</div>
+        </main>
+        <Footer />
+      </div>
+    }>
+      <CartContent />
+    </Suspense>
   )
 } 
