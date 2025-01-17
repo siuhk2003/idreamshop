@@ -33,6 +33,7 @@ export function Footer() {
               <li><Link href="/products?category=clearance" className="text-gray-600 hover:text-gray-800">Clearance</Link></li>
               <li><Link href="/about" className="text-gray-600 hover:text-gray-800">About Us</Link></li>
               <li><Link href="/contact" className="text-gray-600 hover:text-gray-800">Contact</Link></li>
+              <li><Link href="/refund-policy" className="text-gray-600 hover:text-gray-800">Refund and Return Policy</Link></li>
             </ul>
           </div>
           <div>
