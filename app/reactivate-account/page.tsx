@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-export default function ReactivateAccountPage() {
+function ReactivateAccountContent() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
@@ -92,5 +92,21 @@ export default function ReactivateAccountPage() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function ReactivateAccountPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow container mx-auto px-4 py-8">
+          <div>Loading...</div>
+        </main>
+        <Footer />
+      </div>
+    }>
+      <ReactivateAccountContent />
+    </Suspense>
   )
 } 
