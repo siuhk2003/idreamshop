@@ -50,7 +50,7 @@ export function ProductDetails({ products }: ProductDetailsProps) {
       addToCart({
         ...selectedProduct,
         name: `${selectedProduct.name} - ${selectedProduct.color}`,
-        quantity
+        quantity: quantity
       })
     }
   }

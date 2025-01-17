@@ -1,64 +1,45 @@
 import { NextResponse } from 'next/server'
-import { headers } from 'next/headers'
-import { verifyAuth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { cookies } from 'next/headers'
+import { jwtVerify } from 'jose'
+import { getJwtSecretKey, verifyAuth } from '@/lib/auth'
+import { headers } from 'next/headers'
 
 export async function GET() {
   try {
-    const headersList = await headers()
-    const cookieHeader = headersList.get('cookie')
-    const tokenMatch = cookieHeader?.match(/member-token=([^;]+)/)
-    const token = tokenMatch?.[1]
+    const cookieStore = await cookies()
+    const token = cookieStore.get('member-token')?.value
 
     if (!token) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Not authenticated' },
         { status: 401 }
       )
     }
 
-    try {
-      const payload = await verifyAuth(token)
-      const memberEmail = payload.email as string
+    const verified = await jwtVerify(token, getJwtSecretKey())
+    const memberId = verified.payload.id as string
 
-      const member = await prisma.member.findUnique({
-        where: { email: memberEmail },
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          address: true,
-          apartment: true,
-          city: true,
-          province: true,
-          postalCode: true,
-          phone: true
-        }
-      })
-
-      if (!member) {
-        return NextResponse.json(
-          { error: 'Member not found' },
-          { status: 404 }
-        )
+    const member = await prisma.member.findUnique({
+      where: { id: memberId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true
       }
+    })
 
-      return NextResponse.json({
-        success: true,
-        member
-      })
-
-    } catch (jwtError) {
+    if (!member) {
       return NextResponse.json(
-        { error: 'Session expired' },
-        { status: 401 }
+        { error: 'Member not found' },
+        { status: 404 }
       )
     }
 
+    return NextResponse.json(member)
   } catch (error) {
-    console.error('Profile error:', error)
+    console.error('Profile fetch error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch profile' },
       { status: 500 }
@@ -68,10 +49,8 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    const headersList = await headers()
-    const cookieHeader = headersList.get('cookie')
-    const tokenMatch = cookieHeader?.match(/member-token=([^;]+)/)
-    const token = tokenMatch?.[1]
+    const cookieStore = await cookies()
+    const token = cookieStore.get('member-token')?.value
 
     if (!token) {
       return NextResponse.json(

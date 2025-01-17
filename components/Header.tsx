@@ -5,6 +5,8 @@ import Image from 'next/image'
 import { Cart } from '@/components/Cart'
 import { MemberMenu } from '@/components/MemberMenu'
 import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useMember } from '@/hooks/useMember'
 
 type HeaderProps = {
   variant?: 'default' | 'home'
@@ -12,14 +14,23 @@ type HeaderProps = {
 
 export function Header({ variant = 'default' }: HeaderProps) {
   const router = useRouter()
+  const { name: memberName, fetchProfile, setName } = useMember()
+
+  useEffect(() => {
+    fetchProfile()
+  }, []) // Run once on mount
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/member/logout', {
+      const response = await fetch('/api/member/logout', {
         method: 'POST',
         credentials: 'include'
       })
-      router.push('/login')
+
+      if (response.ok) {
+        setName(null)
+        router.push('/login')
+      }
     } catch (error) {
       console.error('Logout failed:', error)
     }
@@ -108,7 +119,7 @@ export function Header({ variant = 'default' }: HeaderProps) {
               </ul>
             </nav>
             <div className="flex items-center space-x-4 pl-4 border-l border-gray-200">
-              <MemberMenu />
+              <MemberMenu memberName={memberName} onLogout={handleLogout} />
               <Cart />
             </div>
           </div>

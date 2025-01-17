@@ -109,6 +109,8 @@ export async function POST(request: Request) {
         shippingInfo
       })
 
+      console.log('Shipping cost from totals:', totals.shipping)
+
       const order = await tx.order.create({
         data: {
           orderNumber: `ORD-${Date.now()}`,
@@ -119,7 +121,7 @@ export async function POST(request: Request) {
           total: totals.total,
           paymentIntentId,
           paymentMethod: 'stripe',
-          shippingCost: totals.shipping || 0,
+          shippingCost: Number(totals.shipping) || 0,
           items: {
             create: items.map((item: CartItem) => ({
               productId: item.id,
@@ -172,10 +174,11 @@ export async function POST(request: Request) {
               apartment: order.shippingInfo.apartment || undefined
             },
             subtotal: order.subtotal,
-            shipping: order.shippingCost,
+            shipping: Number(order.shippingCost),
             gst: order.gst,
             pst: order.pst,
-            total: order.total
+            total: order.total,
+            paymentMethod: order.paymentMethod
           }
           await sendEmail({
             to: order.shippingInfo.email,
