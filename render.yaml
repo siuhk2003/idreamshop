@@ -2,8 +2,10 @@ services:
   - type: web
     name: idreamshop
     env: node
-    nodeVersion: 20.x
-    buildCommand: npm ci && npm run build
+    buildCommand: |
+      npm install
+      npm install @tailwindcss/typography
+      npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     healthCheckTimeout: 5s
