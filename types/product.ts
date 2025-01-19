@@ -1,3 +1,5 @@
+export type Category = 'new' | 'regular' | 'clearance'
+
 export interface Product {
   id: string
   name: string
@@ -6,7 +8,7 @@ export interface Product {
   originalPrice: number | null
   wholesalePrice: number | null
   imageUrl: string
-  category: string
+  category: Category
   stock: number
   color: string
   material: string | null
@@ -14,4 +16,6 @@ export interface Product {
   sku: string
   quantity?: number
   additionalImages?: string[]
+  createdAt: Date | string
+  updatedAt: Date | string
 } 

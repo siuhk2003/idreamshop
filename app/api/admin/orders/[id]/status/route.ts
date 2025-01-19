@@ -1,78 +1,59 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { headers } from 'next/headers'
-import { OrderStatus, Prisma } from '@prisma/client'
+import { sendEmail } from '@/lib/email'
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const headersList = await headers()
-    const hasAdminToken = headersList.get('cookie')?.includes('admin-token')
-    const { id } = await params
+    // Await the params
+    const { id } = await Promise.resolve(context.params)
+    const { status } = await request.json()
 
-    if (!hasAdminToken) {
-      return NextResponse.json({ 
-        success: false,
-        error: 'Unauthorized' 
-      }, { status: 401 })
-    }
-
-    // Check if order is already cancelled
-    const existingOrder = await prisma.order.findUnique({
+    // Get the current order to check payment method and status
+    const currentOrder = await prisma.order.findUnique({
       where: { id },
-      select: { status: true }
+      include: {
+        shippingInfo: true
+      }
     })
 
-    if (existingOrder?.status === OrderStatus.CANCELLED) {
-      return NextResponse.json({ 
-        success: false,
-        error: 'Cannot modify cancelled orders'
-      }, { status: 400 })
+    if (!currentOrder) {
+      return NextResponse.json(
+        { error: 'Order not found' },
+        { status: 404 }
+      )
     }
 
-    let body;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({
-        success: false,
-        error: 'Invalid JSON in request body'
-      }, { status: 400 })
+    // Update order status
+    const updatedOrder = await prisma.order.update({
+      where: { id },
+      data: { status }
+    })
+
+    // Only send email for e-transfer orders being confirmed
+    if (status === 'CONFIRMED' && currentOrder.paymentMethod === 'etransfer') {
+      try {
+        await sendEmail({
+          to: currentOrder.shippingInfo.email,
+          subject: `Payment Confirmed for Order #${currentOrder.orderNumber}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h1 style="color: #333;">Payment Confirmed</h1>
+              <p>Dear ${currentOrder.shippingInfo.firstName},</p>
+              <p>We have received and confirmed your e-transfer payment for order #${currentOrder.orderNumber}.</p>
+              <p>We will notify you once your order has been shipped.</p>
+              <p>Thank you for shopping with us!</p>
+              <br>
+              <p>iDream</p>
+            </div>
+          `
+        })
+      } catch (emailError) {
+        console.error('Failed to send confirmation email:', emailError)
+      }
     }
-
-    if (!body?.status) {
-      return NextResponse.json({
-        success: false,
-        error: 'Status is required'
-      }, { status: 400 })
-    }
-
-    const { status } = body
-
-    if (!Object.values(OrderStatus).includes(status as OrderStatus)) {
-      return NextResponse.json({
-        success: false,
-        error: 'Invalid status'
-      }, { status: 400 })
-    }
-
-    const [updatedOrder] = await prisma.$transaction([
-      prisma.order.update({
-        where: { id },
-        data: { 
-          status: status as OrderStatus 
-        }
-      }),
-      prisma.statusHistory.create({
-        data: {
-          orderId: id,
-          status: status as OrderStatus,
-          notes: `Status updated to ${status}`
-        }
-      })
-    ])
 
     return NextResponse.json({ 
       success: true,
@@ -80,16 +61,10 @@ export async function PATCH(
     })
 
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      return NextResponse.json({ 
-        success: false,
-        error: `Database error: ${error.code}`
-      }, { status: 500 })
-    }
-
-    return NextResponse.json({ 
-      success: false,
-      error: 'Failed to update status'
-    }, { status: 500 })
+    console.error('Error updating order status:', error)
+    return NextResponse.json(
+      { error: 'Failed to update order status' },
+      { status: 500 }
+    )
   }
 } 

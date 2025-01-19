@@ -39,12 +39,14 @@ interface Order {
     lastName: string
     email: string
     address: string
+    apartment?: string
     city: string
     province: string
     postalCode: string
     phone: string
   }
   subtotal: number
+  shippingCost?: number
   gst: number
   pst: number
   total: number
@@ -164,10 +166,10 @@ export default function OrdersPage() {
         orders.map(order => (
           <Card key={order.id}>
             <CardContent className="p-6">
-              <div className="flex justify-between mb-4">
+              <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="font-bold">Order #{order.orderNumber}</h3>
-                  <p className="text-gray-600">
+                  <h3 className="font-semibold">Order #{order.orderNumber}</h3>
+                  <p className="text-sm text-gray-500">
                     {format(new Date(order.createdAt), 'PPP')}
                   </p>
                 </div>
@@ -195,26 +197,70 @@ export default function OrdersPage() {
                   </div>
                 </div>
               </div>
-              
-              <div className="border-t pt-4">
-                <h4 className="font-semibold mb-2">Items:</h4>
-                {order.items.map((item, index) => (
-                  <div key={index} className="flex justify-between text-sm">
-                    <span>{item.product.name} × {item.quantity}</span>
-                    <span>${(item.price * item.quantity).toFixed(2)}</span>
-                  </div>
-                ))}
-              </div>
 
-              <div className="border-t mt-4 pt-4">
-                <h4 className="font-semibold mb-2">Shipping To:</h4>
-                <p className="text-sm">
-                  {order.shippingInfo.firstName} {order.shippingInfo.lastName}<br />
-                  {order.shippingInfo.address}<br />
-                  {order.shippingInfo.city}, {order.shippingInfo.province}<br />
-                  {order.shippingInfo.postalCode}<br />
-                  {order.shippingInfo.phone}
-                </p>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold mb-2">Customer Information</h4>
+                  <div className="space-y-1 text-sm">
+                    <p>
+                      {order.shippingInfo.firstName} {order.shippingInfo.lastName}
+                    </p>
+                    <p>{order.shippingInfo.email}</p>
+                    <p>{order.shippingInfo.phone}</p>
+                  </div>
+
+                  <h4 className="font-semibold mt-4 mb-2">Shipping Address</h4>
+                  <div className="space-y-1 text-sm">
+                    <p>{order.shippingInfo.address}</p>
+                    {order.shippingInfo.apartment && (
+                      <p>Unit {order.shippingInfo.apartment}</p>
+                    )}
+                    <p>
+                      {order.shippingInfo.city}, {order.shippingInfo.province}
+                    </p>
+                    <p>{order.shippingInfo.postalCode}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-2">Order Details</h4>
+                  <div className="space-y-2">
+                    {order.items.map((item, index) => (
+                      <div key={index} className="flex justify-between text-sm">
+                        <span>{item.product.name} × {item.quantity}</span>
+                        <span>${(item.price * item.quantity).toFixed(2)}</span>
+                      </div>
+                    ))}
+                    
+                    <div className="border-t pt-2 mt-2 space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>Subtotal:</span>
+                        <span>${(order.subtotal || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Shipping:</span>
+                        <span>${(order.shippingCost || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>GST (5%):</span>
+                        <span>${(order.gst || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>PST (7%):</span>
+                        <span>${(order.pst || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-semibold pt-1 border-t">
+                        <span>Total:</span>
+                        <span>${(order.total || 0).toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 text-sm">
+                      <span className="font-semibold">Payment Method: </span>
+                      <span className="capitalize">{order.paymentMethod}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {order.status === 'PROCESSING' && order.paymentMethod === 'etransfer' && (

@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button"
 import { ShoppingCart, X } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useCart } from '@/contexts/CartContext'
 
 export function Cart() {
   const { items, removeItem, updateQuantity, setItems } = useCart()
   const [isOpen, setIsOpen] = useState(false)
   const cartRef = useRef<HTMLDivElement>(null)
+  const [selectedProvince, setSelectedProvince] = useState('')
+  const [estimatedShipping, setEstimatedShipping] = useState(0)
 
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
@@ -25,6 +27,18 @@ export function Cart() {
       }
     }
   }
+
+  useEffect(() => {
+    if (selectedProvince && items.length) {
+      fetch(`/api/shipping-cost?items=${items.length}&province=${encodeURIComponent(selectedProvince)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setEstimatedShipping(data.cost)
+          }
+        })
+    }
+  }, [selectedProvince, items.length])
 
   return (
     <div className="relative">

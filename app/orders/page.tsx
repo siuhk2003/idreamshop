@@ -31,6 +31,7 @@ interface Order {
     postalCode: string
   }
   subtotal: number
+  shippingCost: number
   gst: number
   pst: number
   total: number
@@ -144,6 +145,10 @@ export default function OrdersPage() {
                     <div className="flex justify-between text-sm">
                       <span>Subtotal:</span>
                       <span>${order.subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Shipping:</span>
+                      <span>${order.shippingCost.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>GST:</span>

@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Upload } from 'lucide-react'
+import { format } from 'date-fns'
 
 const CATEGORIES = ['new', 'regular', 'clearance'] as const
 type Category = typeof CATEGORIES[number]
@@ -30,9 +31,26 @@ interface Product {
   wholesalePrice?: number | null
   sku: string
   styleCode: string
+  additionalImages?: string[]
+  createdAt: string
+  updatedAt: string
+  color?: string
+  material?: string
 }
 
 const ITEMS_PER_PAGE = 10
+
+const formatDate = (date: Date | string) => {
+  try {
+    const dateObj = new Date(date)
+    if (!isNaN(dateObj.getTime())) {
+      return format(dateObj, 'PPpp')
+    }
+    return 'Invalid date'
+  } catch (error) {
+    return 'Invalid date'
+  }
+}
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -71,7 +89,6 @@ export default function ProductsPage() {
         throw new Error(data.error || 'Failed to fetch products')
       }
       
-      console.log('Fetched products:', data.products)
       setProducts(data.products)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch products')
@@ -374,26 +391,44 @@ export default function ProductsPage() {
         {paginatedProducts.map(product => (
           <Card key={product.id}>
             <CardContent className="p-6">
-              <div className="flex gap-4">
-                <div className="w-32 h-32">
+              <div className="flex gap-6">
+                <div className="w-48 space-y-2">
                   <img 
                     src={product.imageUrl} 
                     alt={product.name}
-                    className="w-full h-full object-cover rounded"
+                    className="w-full h-48 object-cover rounded"
                   />
+                  {product.additionalImages?.map((img, index) => (
+                    <img 
+                      key={index}
+                      src={img} 
+                      alt={`${product.name} view ${index + 1}`}
+                      className="w-full h-24 object-cover rounded"
+                    />
+                  ))}
                 </div>
                 
                 <div className="flex-grow">
                   {editingId === product.id ? (
                     <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Product Name</Label>
-                        <Input
-                          id="name"
-                          value={editForm.name || ''}
-                          onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-                          placeholder="Product name"
-                        />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Product Name</Label>
+                          <Input
+                            id="name"
+                            value={editForm.name || ''}
+                            onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="styleCode">Style Code</Label>
+                          <Input
+                            id="styleCode"
+                            value={editForm.styleCode || ''}
+                            onChange={e => setEditForm({ ...editForm, styleCode: e.target.value })}
+                          />
+                        </div>
                       </div>
 
                       <div className="space-y-2">
@@ -402,19 +437,18 @@ export default function ProductsPage() {
                           id="description"
                           value={editForm.description || ''}
                           onChange={e => setEditForm({ ...editForm, description: e.target.value })}
-                          placeholder="Description"
                         />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="price">Price</Label>
                           <Input
                             id="price"
                             type="number"
+                            step="0.01"
                             value={editForm.price || ''}
                             onChange={e => setEditForm({ ...editForm, price: parseFloat(e.target.value) })}
-                            placeholder="Price"
                           />
                         </div>
 
@@ -423,25 +457,25 @@ export default function ProductsPage() {
                           <Input
                             id="wholesalePrice"
                             type="number"
+                            step="0.01"
                             value={editForm.wholesalePrice || ''}
                             onChange={e => setEditForm({ ...editForm, wholesalePrice: parseFloat(e.target.value) })}
-                            placeholder="Wholesale Price"
                           />
                         </div>
 
-                        {editForm.category === 'clearance' && (
-                          <div className="space-y-2">
-                            <Label htmlFor="originalPrice">Original Price</Label>
-                            <Input
-                              id="originalPrice"
-                              type="number"
-                              value={editForm.originalPrice || ''}
-                              onChange={e => setEditForm({ ...editForm, originalPrice: parseFloat(e.target.value) })}
-                              placeholder="Original Price"
-                            />
-                          </div>
-                        )}
+                        <div className="space-y-2">
+                          <Label htmlFor="originalPrice">Original Price</Label>
+                          <Input
+                            id="originalPrice"
+                            type="number"
+                            step="0.01"
+                            value={editForm.originalPrice || ''}
+                            onChange={e => setEditForm({ ...editForm, originalPrice: parseFloat(e.target.value) })}
+                          />
+                        </div>
+                      </div>
 
+                      <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="stock">Stock</Label>
                           <Input
@@ -449,7 +483,24 @@ export default function ProductsPage() {
                             type="number"
                             value={editForm.stock || ''}
                             onChange={e => setEditForm({ ...editForm, stock: parseInt(e.target.value) })}
-                            placeholder="Stock"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="color">Color</Label>
+                          <Input
+                            id="color"
+                            value={editForm.color || ''}
+                            onChange={e => setEditForm({ ...editForm, color: e.target.value })}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="material">Material</Label>
+                          <Input
+                            id="material"
+                            value={editForm.material || ''}
+                            onChange={e => setEditForm({ ...editForm, material: e.target.value })}
                           />
                         </div>
                       </div>
@@ -458,16 +509,10 @@ export default function ProductsPage() {
                         <Label htmlFor="category">Category</Label>
                         <Select
                           value={editForm.category}
-                          onValueChange={(value) => {
-                            const category = value as Category
-                            setEditForm({ 
-                              ...editForm, 
-                              category,
-                              originalPrice: category === 'clearance' 
-                                ? (editForm.originalPrice || editForm.price)
-                                : null
-                            })
-                          }}
+                          onValueChange={(value: string) => setEditForm({ 
+                            ...editForm, 
+                            category: value as Category 
+                          })}
                         >
                           <SelectTrigger id="category">
                             <SelectValue placeholder="Select category" />
@@ -483,33 +528,39 @@ export default function ProductsPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="sku">SKU</Label>
+                        <Label htmlFor="imageUrl">Main Image URL</Label>
                         <Input
-                          id="sku"
-                          value={editForm.sku || ''}
-                          onChange={e => setEditForm({ ...editForm, sku: e.target.value })}
-                          placeholder="SKU"
+                          id="imageUrl"
+                          value={editForm.imageUrl || ''}
+                          onChange={e => setEditForm({ ...editForm, imageUrl: e.target.value })}
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="variationCode">Variation Code</Label>
-                        <Input
-                          id="styleCode"
-                          value={editForm.styleCode || ''}
-                          onChange={e => setEditForm({ ...editForm, styleCode: e.target.value })}
-                          placeholder="Variation Code"
+                        <Label htmlFor="additionalImages">Additional Image URLs (one per line)</Label>
+                        <Textarea
+                          id="additionalImages"
+                          value={editForm.additionalImages?.join('\n') || ''}
+                          onChange={e => setEditForm({ 
+                            ...editForm, 
+                            additionalImages: e.target.value.split('\n').filter(url => url.trim())
+                          })}
                         />
                       </div>
 
+                      <div className="grid grid-cols-2 gap-4 text-sm text-gray-500">
+                        <div>
+                          <Label>Created At</Label>
+                          <p>{formatDate(product.createdAt)}</p>
+                        </div>
+                        <div>
+                          <Label>Updated At</Label>
+                          <p>{formatDate(product.updatedAt)}</p>
+                        </div>
+                      </div>
+
                       <div className="flex justify-end gap-2">
-                        <Button 
-                          variant="outline" 
-                          onClick={() => {
-                            setEditingId(null)
-                            setEditForm({})
-                          }}
-                        >
+                        <Button variant="outline" onClick={() => setEditingId(null)}>
                           Cancel
                         </Button>
                         <Button onClick={() => handleSave(product.id)}>
@@ -518,33 +569,55 @@ export default function ProductsPage() {
                       </div>
                     </div>
                   ) : (
-                    <>
-                      <div className="flex justify-between mb-2">
-                        <h3 className="font-bold text-lg">{product.name}</h3>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="text-lg font-semibold">{product.name}</h3>
+                          <p className="text-sm text-gray-500">SKU: {product.sku}</p>
+                          <p className="text-sm text-gray-500">Style Code: {product.styleCode}</p>
+                        </div>
                         <Button onClick={() => handleEdit(product)}>
                           Edit
                         </Button>
                       </div>
-                      <p className="text-gray-600 mb-2">{product.description}</p>
+
+                      <p className="text-gray-600">{product.description}</p>
+
                       <div className="grid grid-cols-3 gap-4 text-sm">
                         <div>
                           <span className="font-semibold">Price:</span> ${product.price}
-                          {product.category === 'clearance' && product.originalPrice && (
-                            <span className="text-red-500 line-through ml-2">
-                              ${product.originalPrice}
-                            </span>
-                          )}
-                          <br />
-                          <span className="font-semibold">Wholesale:</span> ${product.wholesalePrice ?? 'N/A'}
                         </div>
+                        <div>
+                          <span className="font-semibold">Wholesale:</span> ${product.wholesalePrice}
+                        </div>
+                        {product.originalPrice && (
+                          <div>
+                            <span className="font-semibold">Original:</span> ${product.originalPrice}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4 text-sm">
                         <div>
                           <span className="font-semibold">Stock:</span> {product.stock}
                         </div>
                         <div>
-                          <span className="font-semibold">Category:</span> {product.category}
+                          <span className="font-semibold">Color:</span> {product.color}
+                        </div>
+                        <div>
+                          <span className="font-semibold">Material:</span> {product.material}
                         </div>
                       </div>
-                    </>
+
+                      <div className="text-sm">
+                        <div>
+                          <span className="font-semibold">Created:</span> {formatDate(product.createdAt)}
+                        </div>
+                        <div>
+                          <span className="font-semibold">Updated:</span> {formatDate(product.updatedAt)}
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>

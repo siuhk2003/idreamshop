@@ -304,22 +304,20 @@ export default function CheckoutPage() {
   }
 
   useEffect(() => {
-    const fetchShippingCost = async () => {
-      try {
-        const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
-        const response = await fetch(`/api/shipping-cost?items=${totalItems}`)
+    const calculateShipping = async () => {
+      if (items.length && shippingInfo.province) {
+        const response = await fetch(
+          `/api/shipping-cost?items=${items.length}&province=${encodeURIComponent(shippingInfo.province)}`
+        )
         const data = await response.json()
-        
         if (data.success) {
           setShippingCost(data.cost)
         }
-      } catch (error) {
-        console.error('Failed to fetch shipping cost:', error)
       }
     }
 
-    fetchShippingCost()
-  }, [items])
+    calculateShipping()
+  }, [items.length, shippingInfo.province])
 
   useEffect(() => {
     if (!items.length) {

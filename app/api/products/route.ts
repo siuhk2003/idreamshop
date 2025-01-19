@@ -27,7 +27,9 @@ export async function GET(request: Request) {
         color: true,
         stock: true,
         description: true,
-        material: true
+        material: true,
+        createdAt: true,
+        updatedAt: true
       }
     })
 

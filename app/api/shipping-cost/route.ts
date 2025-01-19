@@ -5,10 +5,19 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const items = parseInt(searchParams.get('items') || '0')
+    const province = searchParams.get('province')
+
+    if (!province) {
+      return NextResponse.json(
+        { error: 'Province is required' },
+        { status: 400 }
+      )
+    }
 
     const rate = await prisma.shippingRate.findFirst({
       where: {
         AND: [
+          { province },
           { minItems: { lte: items } },
           {
             OR: [
