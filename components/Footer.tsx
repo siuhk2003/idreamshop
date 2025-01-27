@@ -40,10 +40,20 @@ export function Footer() {
             <h3 className="text-lg font-semibold mb-4">Connect With Us</h3>
             <p className="text-gray-600 mb-4">Follow us on social media for the latest updates and promotions.</p>
             <div className="flex space-x-4">
-              <Link href="https://www.instagram.com" className="text-gray-600 hover:text-gray-800">
+              <Link 
+                href="https://www.instagram.com/idreamshop.ca/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-gray-600 hover:text-gray-800"
+              >
                 <Instagram className="w-6 h-6" />
               </Link>
-              <Link href="https://www.facebook.com" className="text-gray-600 hover:text-gray-800">
+              <Link 
+                href="https://www.facebook.com/irischeng926" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-gray-600 hover:text-gray-800"
+              >
                 <Facebook className="w-6 h-6" />
               </Link>
             </div>
