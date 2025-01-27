@@ -51,6 +51,11 @@ export async function PATCH(
       stock: Number(updates.stock),
       category: updates.category,
       imageUrl: updates.imageUrl,
+      mancode: updates.mancode,
+      productcost: Number(updates.productcost),
+      productcharges: Number(updates.productcharges),
+      remarks: updates.remarks,
+      exchangeRate: Number(updates.exchangeRate),
       updatedAt: new Date()
     }
 
@@ -65,11 +70,6 @@ export async function PATCH(
     })
 
   } catch (error) {
-    // Safe error logging
-    if (error instanceof Error) {
-      console.error('Failed to update product:', error.message)
-    }
-
     return NextResponse.json({ 
       success: false,
       error: 'Failed to update product'

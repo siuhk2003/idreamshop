@@ -43,3 +43,16 @@ next-env.d.ts
 
 # Prisma
 /prisma/migrations/
+
+# Excel temporary files
+~$*.xlsx
+~$*.xls
+
+# Data directory
+/data/*.xlsx
+/data/*.xls
+
+# Other common files to ignore
+*.log
+node_modules/
+.next/

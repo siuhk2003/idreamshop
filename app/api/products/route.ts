@@ -17,19 +17,26 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
-        styleCode: true,
-        sku: true,
         name: true,
+        description: true,
         price: true,
         originalPrice: true,
-        category: true,
+        wholesalePrice: true,
         imageUrl: true,
-        color: true,
+        category: true,
         stock: true,
-        description: true,
+        color: true,
         material: true,
+        styleCode: true,
+        sku: true,
+        mancode: true,
+        productcost: true,
+        productcharges: true,
+        remarks: true,
+        additionalImages: true,
         createdAt: true,
-        updatedAt: true
+        updatedAt: true,
+        exchangeRate: true
       }
     })
 
@@ -39,11 +46,10 @@ export async function GET(request: Request) {
     })
 
   } catch (error) {
-    console.error('Products fetch error:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch products' },
-      { status: 500 }
-    )
+    return NextResponse.json({ 
+      success: false,
+      error: 'Failed to fetch products'
+    }, { status: 500 })
   }
 }
 
