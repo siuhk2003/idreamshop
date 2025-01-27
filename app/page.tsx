@@ -7,29 +7,29 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { Footer } from '@/components/Footer'
 import { ProductCard } from '@/components/ProductCard'
-import { Product } from '@/types/product'
+import { Product, Category } from '@/types/product'
 import { Header } from '@/components/Header'
 
 // Make the component async
 export default async function Home() {
   // Fetch products from database
-  const newArrivals = await prisma.product.findMany({
+  const newArrivals = (await prisma.product.findMany({
     where: { category: 'new' },
     take: 4,
     orderBy: { createdAt: 'desc' }
-  })
+  })) as Product[]
 
-  const featuredProducts = await prisma.product.findMany({
+  const featuredProducts = (await prisma.product.findMany({
     where: { category: 'regular' },
     take: 4,
     orderBy: { createdAt: 'desc' }
-  })
+  })) as Product[]
 
-  const clearanceProducts = await prisma.product.findMany({
+  const clearanceProducts = (await prisma.product.findMany({
     where: { category: 'clearance' },
     take: 4,
     orderBy: { createdAt: 'desc' }
-  })
+  })) as Product[]
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-200">
@@ -43,7 +43,7 @@ export default async function Home() {
               Elevate Your Style with Premium Accessories
             </h2>
             <p className="mt-6 max-w-2xl mx-auto text-xl">
-              Discover our collection of high-quality hair accessories, perfect for any occasion.
+              Discover our collection of high-quality accessories, perfect for any occasion.
             </p>
             <div className="mt-10">
               <Link href="/products">
@@ -60,11 +60,17 @@ export default async function Home() {
           <section id="new" className="mb-16">
             <h2 className="text-3xl font-extrabold text-gray-900 mb-8">New Arrivals</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {newArrivals.map((product: Product) => (
+              {newArrivals.map((product) => (
                 <ProductCard
                   key={product.id}
-                  {...product}
+                  styleCode={product.styleCode}
+                  name={product.name}
+                  price={product.price}
+                  imageUrl={product.imageUrl}
+                  color={product.color}
                   isClearance={product.category === 'clearance'}
+                  stock={product.stock}
+                  originalPrice={product.originalPrice}
                 />
               ))}
             </div>

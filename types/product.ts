@@ -1,4 +1,4 @@
-export type Category = 'new' | 'regular' | 'clearance'
+type Category = 'new' | 'regular' | 'clearance'
 
 export interface Product {
   id: string
@@ -11,11 +11,18 @@ export interface Product {
   category: Category
   stock: number
   color: string
-  material: string | null
+  material?: string
   styleCode: string
   sku: string
-  quantity?: number
+  mancode: string
+  productcost: number
+  productcharges: number
+  remarks?: string
   additionalImages?: string[]
-  createdAt: Date | string
-  updatedAt: Date | string
-} 
+  createdAt: string | Date
+  updatedAt: string | Date
+  exchangeRate: number
+  version: number
+}
+
+export type { Category } 
