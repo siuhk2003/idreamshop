@@ -88,8 +88,13 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'etransfer'>('stripe')
   const [shippingCost, setShippingCost] = useState(0)
   const [clientSecret, setClientSecret] = useState('')
+  const [discountCode, setDiscountCode] = useState('')
+  const [discount, setDiscount] = useState(0)
+  const [discountError, setDiscountError] = useState('')
 
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const subtotalBeforeDiscount = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const discountAmount = (subtotalBeforeDiscount * discount) / 100
+  const subtotal = subtotalBeforeDiscount - discountAmount
   const gst = subtotal * GST_RATE
   const pst = subtotal * PST_RATE
   const total = subtotal + gst + pst + shippingCost
@@ -344,6 +349,31 @@ export default function CheckoutPage() {
     updatePaymentIntent()
   }, [items, total, router])
 
+  const handleApplyDiscount = async () => {
+    setDiscountError('')
+    
+    try {
+      const response = await fetch('/api/discount/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code: discountCode }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Invalid discount code')
+      }
+
+      setDiscount(data.discount)
+    } catch (error) {
+      setDiscountError(error instanceof Error ? error.message : 'Failed to apply discount code')
+      setDiscount(0)
+    }
+  }
+
   // Add early return if cart is empty
   if (!items.length) {
     return null // Return null while redirecting
@@ -588,11 +618,43 @@ export default function CheckoutPage() {
                       <p>${(item.price * item.quantity).toFixed(2)}</p>
                     </div>
                   ))}
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold mb-2">Discount Code</h3>
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        value={discountCode}
+                        onChange={(e) => setDiscountCode(e.target.value)}
+                        placeholder="Enter discount code"
+                        className="flex-grow"
+                      />
+                      <Button 
+                        onClick={handleApplyDiscount}
+                        variant="outline"
+                      >
+                        Apply
+                      </Button>
+                    </div>
+                    {discountError && (
+                      <p className="text-red-500 text-sm mt-1">{discountError}</p>
+                    )}
+                    {discount > 0 && (
+                      <p className="text-green-600 text-sm mt-1">
+                        Discount applied: {discount}% off
+                      </p>
+                    )}
+                  </div>
                   <div className="border-t pt-4 space-y-2">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span>${subtotal.toFixed(2)}</span>
+                      <span>${subtotalBeforeDiscount.toFixed(2)}</span>
                     </div>
+                    {discount > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Discount ({discount}%)</span>
+                        <span>-${discountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span>GST (5%)</span>
                       <span>${gst.toFixed(2)}</span>

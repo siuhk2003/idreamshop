@@ -57,6 +57,14 @@ export default function AdminLayout({
               >
                 Shipping Rates
               </Link>
+              <Link 
+                href="/admin/discount-codes" 
+                className={`inline-flex items-center px-4 py-2 border-b-2 ${
+                  pathname === '/admin/discount-codes' ? 'border-blue-500' : 'border-transparent'
+                }`}
+              >
+                Discount Codes
+              </Link>
             </div>
             <div className="flex items-center gap-4">
               <Link href="/" className="inline-flex items-center px-4 py-2">

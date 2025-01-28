@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Instagram, Facebook } from 'lucide-react'
+import { Instagram as InstagramIcon, Facebook as FacebookIcon } from 'lucide-react'
 import { MemberLinks } from './MemberLinks'
 
 export function Footer() {
@@ -34,6 +34,7 @@ export function Footer() {
               <li><Link href="/about" className="text-gray-600 hover:text-gray-800">About Us</Link></li>
               <li><Link href="/contact" className="text-gray-600 hover:text-gray-800">Contact</Link></li>
               <li><Link href="/refund-policy" className="text-gray-600 hover:text-gray-800">Refund and Return Policy</Link></li>
+              <li><Link href="/order-lookup" className="text-gray-600 hover:text-gray-800">Order Lookup</Link></li>
             </ul>
           </div>
           <div>
@@ -46,7 +47,7 @@ export function Footer() {
                 rel="noopener noreferrer" 
                 className="text-gray-600 hover:text-gray-800"
               >
-                <Instagram className="w-6 h-6" />
+                <InstagramIcon className="w-6 h-6" />
               </Link>
               <Link 
                 href="https://www.facebook.com/irischeng926" 
@@ -54,7 +55,7 @@ export function Footer() {
                 rel="noopener noreferrer" 
                 className="text-gray-600 hover:text-gray-800"
               >
-                <Facebook className="w-6 h-6" />
+                <FacebookIcon className="w-6 h-6" />
               </Link>
             </div>
           </div>

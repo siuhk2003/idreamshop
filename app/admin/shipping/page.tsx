@@ -144,6 +144,23 @@ export default function ShippingRatesPage() {
     }
   }
 
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/api/admin/shipping-rates/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete rate')
+      }
+
+      fetchRates() // Refresh the list after deletion
+    } catch (error) {
+      setError('Failed to delete shipping rate')
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -294,12 +311,7 @@ export default function ShippingRatesPage() {
                       </div>
                       <Button 
                         variant="destructive"
-                        onClick={() => {
-                          fetch(`/api/admin/shipping-rates/${rate.id}`, {
-                            method: 'DELETE',
-                            credentials: 'include'
-                          }).then(() => fetchRates())
-                        }}
+                        onClick={() => handleDelete(rate.id)}
                       >
                         Delete
                       </Button>

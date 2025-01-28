@@ -169,3 +169,14 @@ model ReactivationToken {
   expires   DateTime
   createdAt DateTime @default(now())
 }
+
+model DiscountCode {
+  id          String    @id @default(cuid()) @map("_id")
+  code        String    @unique
+  discount    Float     // Percentage discount (e.g., 10 for 10%)
+  active      Boolean   @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
