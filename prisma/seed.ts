@@ -22,7 +22,10 @@ const createProduct = (
   category,
   stock: Math.floor(Math.random() * 50) + 10,
   color,
-  material
+  material,
+  mancode: "DEFAULT",
+  productcost: price * 0.5,
+  productcharges: price * 0.1
 })
 
 async function main() {

@@ -24,6 +24,25 @@ export async function POST(request: Request) {
       }, { status: 400 })
     }
 
+    // Add image size validation
+    const validateImage = async (imageFile: File) => {
+      const maxSize = 5 * 1024 * 1024 // 5MB
+      if (imageFile.size > maxSize) {
+        throw new Error('Image must be less than 5MB')
+      }
+
+      // Recommended dimensions
+      const img = new Image()
+      await new Promise((resolve) => {
+        img.onload = resolve
+        img.src = URL.createObjectURL(imageFile)
+      })
+
+      if (img.width < 800 || img.height < 800) {
+        throw new Error('Image dimensions should be at least 800x800 pixels')
+      }
+    }
+
     const newProduct = await prisma.product.create({
       data: {
         ...product,

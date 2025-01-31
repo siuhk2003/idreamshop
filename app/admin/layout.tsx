@@ -67,13 +67,18 @@ export default function AdminLayout({
               </Link>
             </div>
             <div className="flex items-center gap-4">
+              <Link 
+                href="/admin/profile" 
+                className={`inline-flex items-center px-4 py-2 border-b-2 ${
+                  pathname === '/admin/profile' ? 'border-blue-500' : 'border-transparent'
+                }`}
+              >
+                Profile
+              </Link>
               <Link href="/" className="inline-flex items-center px-4 py-2">
                 Back to Shop
               </Link>
-              <Button 
-                variant="outline"
-                onClick={handleLogout}
-              >
+              <Button variant="outline" onClick={handleLogout}>
                 Logout
               </Button>
             </div>

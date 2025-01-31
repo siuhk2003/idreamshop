@@ -35,6 +35,7 @@ export function ProductCard({
             width={400}
             height={400}
             className="w-full h-[300px] object-cover rounded-t-lg"
+            priority
           />
           <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
           <p className="text-sm text-gray-600">Color: {color}</p>

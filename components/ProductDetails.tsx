@@ -50,8 +50,8 @@ export function ProductDetails({ products }: ProductDetailsProps) {
       addToCart({
         ...selectedProduct,
         name: `${selectedProduct.name} - ${selectedProduct.color}`,
-        quantity: quantity
-      })
+        quantity // This will be handled by the cart context, not the Product type
+      } as any) // Use type assertion since cart items have quantity
     }
   }
 
@@ -66,10 +66,11 @@ export function ProductDetails({ products }: ProductDetailsProps) {
       <div className="relative">
         <div className="relative w-full h-[500px]">
           <Image
-            src={allImages[currentImageIndex]}
-            alt={`${selectedProduct.name} - View ${currentImageIndex + 1}`}
-            fill
-            className="object-contain rounded-lg"
+            src={selectedProduct.imageUrl}
+            alt={selectedProduct.name}
+            width={600}
+            height={600}
+            className="w-full h-auto object-cover rounded-lg"
             priority
           />
         </div>
