@@ -30,12 +30,11 @@ export function ProductCard({
       <Card className="bg-white transition-transform hover:scale-105">
         <CardContent className="p-4">
           <Image
-            src={imageUrl}
+            src={`https://res.cloudinary.com/ds0l9eoac/image/upload/${imageUrl}`}
             alt={name}
             width={400}
-            height={400}
-            className="w-full h-[300px] object-cover rounded-t-lg"
-            priority
+            height={300}
+            className="rounded-lg object-cover"
           />
           <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
           <p className="text-sm text-gray-600">Color: {color}</p>
