@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useCart } from '@/contexts/CartContext'
 import Image from 'next/image'
 import { Product } from '@/types/product'
+import { getCloudinaryUrl } from '@/lib/utils'
 
 interface ProductCardProps extends Partial<Product> {
   isClearance?: boolean
@@ -14,6 +15,10 @@ interface ProductCardProps extends Partial<Product> {
   price: number
   imageUrl: string
   color: string
+}
+
+const cloudinaryLoader = ({ src, width, quality }: any) => {
+  return getCloudinaryUrl(src)
 }
 
 export function ProductCard({ 
@@ -26,16 +31,19 @@ export function ProductCard({
   isClearance 
 }: ProductCardProps) {
   return (
-    <Link href={`/products/${encodeURIComponent(styleCode)}`}>
-      <Card className="bg-white transition-transform hover:scale-105">
-        <CardContent className="p-4">
+    <Card className="overflow-hidden">
+      <Link href={`/products/${styleCode}`}>
+        <div className="relative aspect-square">
           <Image
-            src={`https://res.cloudinary.com/ds0l9eoac/image/upload/${imageUrl}`}
-            alt={name}
-            width={400}
-            height={300}
-            className="rounded-lg object-cover"
+            loader={cloudinaryLoader}
+            src={imageUrl}
+            alt={name || 'Product image'}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
+        </div>
+        <CardContent className="p-4">
           <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
           <p className="text-sm text-gray-600">Color: {color}</p>
 
@@ -49,7 +57,7 @@ export function ProductCard({
             <p className="text-gray-600">${price.toFixed(2)}</p>
           )}
         </CardContent>
-      </Card>
-    </Link>
+      </Link>
+    </Card>
   )
 }

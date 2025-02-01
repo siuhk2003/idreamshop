@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { Product } from '@/types/product'
+import { getCloudinaryUrl } from '@/lib/utils'
 
 interface CartItem {
   id: string
@@ -16,7 +17,7 @@ interface CartItem {
 interface CartContextType {
   items: CartItem[]
   setItems: (items: CartItem[]) => void
-  addToCart: (product: Product) => void
+  addToCart: (product: Product & { quantity: number }) => void
   removeItem: (id: string) => void
   updateQuantity: (id: string, quantity: number) => Promise<boolean>
   clearCart: () => void
@@ -34,36 +35,37 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const addToCart = (product: Product & { quantity?: number }) => {
+  useEffect(() => {
+    console.log('Cart Items:', items)
+  }, [items])
+
+  const addToCart = (product: Product & { quantity: number }) => {
+    console.log('Adding to cart:', product)
+    
     setItems(currentItems => {
       const existingItem = currentItems.find(item => item.id === product.id)
-      let newItems: CartItem[]
-
+      
       if (existingItem) {
-        if (existingItem.quantity + 1 > product.stock) {
-          alert(`Sorry, only ${product.stock} items available`)
-          return currentItems
-        }
-        newItems = currentItems.map(item =>
+        console.log('Updating existing item:', existingItem)
+        return currentItems.map(item =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + (product.quantity || 1) }
+            ? { ...item, quantity: item.quantity + product.quantity }
             : item
         )
-      } else {
-        const cartItem: CartItem = {
-          id: product.id,
-          productId: product.id,
-          name: product.name,
-          price: product.price,
-          quantity: product.quantity || 1,
-          imageUrl: product.imageUrl,
-          stock: product.stock
-        }
-        newItems = [...currentItems, cartItem]
       }
-
-      localStorage.setItem('cart', JSON.stringify(newItems))
-      return newItems
+      
+      const cartItem: CartItem = {
+        id: product.id,
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        quantity: product.quantity,
+        imageUrl: getCloudinaryUrl(product.imageUrl),
+        stock: product.stock
+      }
+      
+      console.log('Adding new item:', cartItem)
+      return [...currentItems, cartItem]
     })
   }
 

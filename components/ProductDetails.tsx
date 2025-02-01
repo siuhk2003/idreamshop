@@ -14,9 +14,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import { getCloudinaryUrl } from '@/lib/utils'
 
 interface ProductDetailsProps {
   products: Product[]
+}
+
+const cloudinaryLoader = ({ src, width, quality }: any) => {
+  return getCloudinaryUrl(src)
 }
 
 export function ProductDetails({ products }: ProductDetailsProps) {
@@ -63,72 +68,16 @@ export function ProductDetails({ products }: ProductDetailsProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div className="relative">
-        <div className="relative w-full h-[500px]">
-          <Image
-            src={selectedProduct.imageUrl}
-            alt={selectedProduct.name}
-            width={600}
-            height={600}
-            className="w-full h-auto object-cover rounded-lg"
-            priority
-          />
-        </div>
-        
-        {allImages.length > 1 && (
-          <>
-            <button
-              onClick={previousImage}
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md"
-              aria-label="Previous image"
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </button>
-            <button
-              onClick={nextImage}
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md"
-              aria-label="Next image"
-            >
-              <ChevronRight className="h-6 w-6" />
-            </button>
-
-            {/* Image indicators */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
-              {allImages.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentImageIndex(index)}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    currentImageIndex === index ? 'bg-blue-500' : 'bg-gray-300'
-                  }`}
-                  aria-label={`Go to image ${index + 1}`}
-                />
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* Thumbnail preview */}
-        {allImages.length > 1 && (
-          <div className="flex justify-center mt-4 space-x-2">
-            {allImages.map((image, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentImageIndex(index)}
-                className={`relative w-16 h-16 rounded-md overflow-hidden border-2 transition-colors ${
-                  currentImageIndex === index ? 'border-blue-500' : 'border-transparent'
-                }`}
-              >
-                <Image
-                  src={image}
-                  alt={`Thumbnail ${index + 1}`}
-                  fill
-                  className="object-cover"
-                />
-              </button>
-            ))}
-          </div>
-        )}
+      <div className="relative aspect-square">
+        <Image
+          loader={cloudinaryLoader}
+          src={selectedProduct.imageUrl}
+          alt={selectedProduct.name || 'Product image'}
+          fill
+          className="object-cover rounded-lg"
+          priority
+          sizes="(max-width: 768px) 100vw, 50vw"
+        />
       </div>
 
       <div>

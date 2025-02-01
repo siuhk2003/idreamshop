@@ -7,7 +7,8 @@ const nextConfig = {
         hostname: 'res.cloudinary.com',
         pathname: '/**',
       }
-    ]
+    ],
+    domains: ['res.cloudinary.com']
   },
   typescript: {
     ignoreBuildErrors: true,
