@@ -7,6 +7,8 @@ import { MemberMenu } from '@/components/MemberMenu'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { useMember } from '@/hooks/useMember'
+import { Button } from './ui/button'
+import { useCart } from '@/contexts/CartContext'
 
 type HeaderProps = {
   variant?: 'default' | 'home'
@@ -15,6 +17,7 @@ type HeaderProps = {
 export function Header({ variant = 'default' }: HeaderProps) {
   const router = useRouter()
   const { name: memberName, fetchProfile, setName } = useMember()
+  const { items } = useCart()
 
   useEffect(() => {
     fetchProfile()

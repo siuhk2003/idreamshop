@@ -8,13 +8,17 @@ import Image from 'next/image'
 import { Product } from '@/types/product'
 import { getCloudinaryUrl } from '@/lib/utils'
 
-interface ProductCardProps extends Partial<Product> {
-  isClearance?: boolean
+interface ProductCardProps {
+  id: string
   styleCode: string
+  sku: string
   name: string
   price: number
+  originalPrice?: number | null
   imageUrl: string
   color: string
+  isClearance?: boolean
+  stock: number
 }
 
 const cloudinaryLoader = ({ src, width, quality }: any) => {
@@ -22,17 +26,34 @@ const cloudinaryLoader = ({ src, width, quality }: any) => {
 }
 
 export function ProductCard({ 
+  id,
   styleCode,
+  sku,
   name, 
   price, 
   originalPrice,
   imageUrl,
   color,
-  isClearance 
+  isClearance,
+  stock 
 }: ProductCardProps) {
+  console.log('ProductCard received:', { id, styleCode, sku })
+  
+  if (!sku) {
+    console.warn('No SKU provided for product:', { id, styleCode })
+  }
+
+  // Ensure we have a SKU for the URL
+  const productUrl = sku 
+    ? `/products/${styleCode}?sku=${encodeURIComponent(sku)}`
+    : `/products/${styleCode}`
+
   return (
     <Card className="overflow-hidden">
-      <Link href={`/products/${styleCode}`}>
+      <Link 
+        href={productUrl}
+        passHref
+      >
         <div className="relative aspect-square">
           <Image
             loader={cloudinaryLoader}

@@ -1,35 +1,56 @@
 import Image from 'next/image'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Star, User, Instagram, Facebook } from 'lucide-react'
-import { Cart } from '@/components/Cart'
+import { Star } from 'lucide-react'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { Footer } from '@/components/Footer'
 import { ProductCard } from '@/components/ProductCard'
-import { Product, Category } from '@/types/product'
+import { Product } from '@/types/product'
 import { Header } from '@/components/Header'
 
-// Make the component async
-export default async function Home() {
+export default async function HomePage() {
   // Fetch products from database
-  const newArrivals = (await prisma.product.findMany({
-    where: { category: 'new' },
-    take: 4,
-    orderBy: { createdAt: 'desc' }
-  })) as Product[]
+  const products = await prisma.product.findMany({
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      price: true,
+      originalPrice: true,
+      wholesalePrice: true,
+      imageUrl: true,
+      category: true,
+      stock: true,
+      color: true,
+      material: true,
+      styleCode: true,
+      sku: true,
+      additionalImages: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  }) as unknown as Product[]
 
-  const featuredProducts = (await prisma.product.findMany({
-    where: { category: 'regular' },
-    take: 4,
-    orderBy: { createdAt: 'desc' }
-  })) as Product[]
+  // Update the grouping logic to keep all products
+  const productsByCategory = products.reduce((acc, product) => {
+    if (!acc[product.category]) {
+      acc[product.category] = []
+    }
+    acc[product.category].push(product)
+    return acc
+  }, {} as Record<string, Product[]>)
 
-  const clearanceProducts = (await prisma.product.findMany({
-    where: { category: 'clearance' },
-    take: 4,
-    orderBy: { createdAt: 'desc' }
-  })) as Product[]
+  // Get first 4 products from each category
+  const newArrivals = (productsByCategory['new'] || []).slice(0, 4)
+  const featuredProducts = (productsByCategory['regular'] || []).slice(0, 4)
+  const clearanceProducts = (productsByCategory['clearance'] || []).slice(0, 4)
+
+  // Debug logs
+  console.log('First new arrival:', newArrivals[0]?.sku)
+  console.log('Product data:', products[0])
+  console.log('New Arrivals:', newArrivals[0])
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-200">
@@ -63,14 +84,8 @@ export default async function Home() {
               {newArrivals.map((product) => (
                 <ProductCard
                   key={product.id}
-                  styleCode={product.styleCode}
-                  name={product.name}
-                  price={product.price}
-                  imageUrl={product.imageUrl}
-                  color={product.color}
+                  {...product}
                   isClearance={product.category === 'clearance'}
-                  stock={product.stock}
-                  originalPrice={product.originalPrice}
                 />
               ))}
             </div>
@@ -80,11 +95,11 @@ export default async function Home() {
           <section id="products" className="mb-16">
             <h2 className="text-3xl font-extrabold text-gray-900 mb-8">Featured Products</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {featuredProducts.map((product: Product) => (
+              {featuredProducts.map((product) => (
                 <ProductCard
                   key={product.id}
                   {...product}
-                  isClearance={false}
+                  isClearance={product.category === 'clearance'}
                 />
               ))}
             </div>
@@ -101,7 +116,7 @@ export default async function Home() {
           <section id="clearance">
             <h2 className="text-3xl font-extrabold text-gray-900 mb-8">Clearance Sale</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {clearanceProducts.map((product: Product) => (
+              {clearanceProducts.map((product) => (
                 <ProductCard
                   key={product.id}
                   {...product}

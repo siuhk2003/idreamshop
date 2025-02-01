@@ -99,7 +99,9 @@ export function ProductGrid() {
           {paginatedProducts.map((product) => (
             <ProductCard
               key={product.id}
+              id={product.id}
               styleCode={product.styleCode}
+              sku={product.sku}
               name={product.name}
               price={product.price}
               imageUrl={product.imageUrl}
