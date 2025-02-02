@@ -33,7 +33,7 @@ export async function sendVerificationEmail(email: string, token: string) {
     throw new Error('APP_URL environment variable is not set')
   }
 
-  const verificationUrl = `${appUrl}/verify-email?token=${token}`
+  const verificationUrl = `${appUrl}/verify-email?token=${encodeURIComponent(token)}`
 
   await transporter.sendMail({
     from: process.env.SMTP_FROM,
