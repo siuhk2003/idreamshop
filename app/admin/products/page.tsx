@@ -80,7 +80,26 @@ export default function ProductsPage() {
     exchangeRate: 0
   })
   const [currentPage, setCurrentPage] = useState(1)
-  const [newProduct, setNewProduct] = useState({
+  const [newProduct, setNewProduct] = useState<{
+    name: string
+    description: string
+    price: number
+    originalPrice: number | null
+    wholesalePrice: number | null
+    imageUrl: string
+    category: string
+    stock: number
+    color?: string
+    material?: string
+    styleCode: string
+    sku: string
+    mancode: string
+    productcost: number
+    productcharges: number
+    remarks?: string
+    additionalImages: string
+    exchangeRate: number
+  }>({
     name: '',
     description: '',
     price: 0,
@@ -89,10 +108,8 @@ export default function ProductsPage() {
     imageUrl: '',
     category: 'regular',
     stock: 0,
-    color: '',
-    material: '',
-    styleCode: '',
     sku: '',
+    styleCode: '',
     mancode: '',
     productcost: 0,
     productcharges: 0,
@@ -131,13 +148,18 @@ export default function ProductsPage() {
     e.preventDefault()
     
     try {
+      const formData = {
+        ...newProduct,
+        additionalImages: newProduct.additionalImages.trim() 
+          ? newProduct.additionalImages.split(',').map(url => url.trim()).filter(Boolean)
+          : []
+      }
+
       const response = await fetch('/api/admin/products', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(newProduct)
+        body: JSON.stringify(formData)
       })
 
       const data = await response.json()
@@ -344,6 +366,32 @@ export default function ProductsPage() {
                 <div>
                   <Label htmlFor="price">Price</Label>
                   <Input id="price" name="price" type="number" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })} required />
+                </div>
+                <div>
+                  <Label htmlFor="wholesalePrice">Wholesale Price</Label>
+                  <Input 
+                    id="wholesalePrice" 
+                    name="wholesalePrice" 
+                    type="number" 
+                    value={newProduct.wholesalePrice || ''} 
+                    onChange={(e) => setNewProduct({ 
+                      ...newProduct, 
+                      wholesalePrice: e.target.value ? parseFloat(e.target.value) : null 
+                    })} 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="originalPrice">Original Price</Label>
+                  <Input 
+                    id="originalPrice" 
+                    name="originalPrice" 
+                    type="number" 
+                    value={newProduct.originalPrice || ''} 
+                    onChange={(e) => setNewProduct({ 
+                      ...newProduct, 
+                      originalPrice: e.target.value ? parseFloat(e.target.value) : null 
+                    })} 
+                  />
                 </div>
                 <div>
                   <Label htmlFor="category">Category</Label>
