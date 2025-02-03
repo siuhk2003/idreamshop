@@ -127,7 +127,9 @@ export default function ProductsPage() {
     }
   }
 
-  const handleAddProduct = async () => {
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
     try {
       const response = await fetch('/api/admin/products', {
         method: 'POST',
@@ -156,8 +158,8 @@ export default function ProductsPage() {
         stock: 0,
         color: '',
         material: '',
-        sku: '',
         styleCode: '',
+        sku: '',
         mancode: '',
         productcost: 0,
         productcharges: 0,
