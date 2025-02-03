@@ -80,12 +80,13 @@ export default function ProductsPage() {
     exchangeRate: 0
   })
   const [currentPage, setCurrentPage] = useState(1)
-  const [newProduct, setNewProduct] = useState<Partial<Product>>({
+  const [newProduct, setNewProduct] = useState({
     name: '',
     description: '',
-    productcost: 0,
-    productcharges: 0,
-    exchangeRate: 0.19,
+    price: 0,
+    originalPrice: null,
+    wholesalePrice: null,
+    imageUrl: '',
     category: 'regular',
     stock: 0,
     color: '',
@@ -93,8 +94,11 @@ export default function ProductsPage() {
     styleCode: '',
     sku: '',
     mancode: '',
-    imageUrl: '',
-    remarks: ''
+    productcost: 0,
+    productcharges: 0,
+    remarks: '',
+    additionalImages: '',
+    exchangeRate: 0.19
   })
   const [showAddForm, setShowAddForm] = useState(false)
   const [importing, setImporting] = useState(false)
@@ -144,18 +148,22 @@ export default function ProductsPage() {
       setNewProduct({
         name: '',
         description: '',
-        productcost: 0,
-        productcharges: 0,
-        exchangeRate: 0.19,
+        price: 0,
+        originalPrice: null,
+        wholesalePrice: null,
+        imageUrl: '',
         category: 'regular',
         stock: 0,
         color: '',
         material: '',
-        styleCode: '',
         sku: '',
+        styleCode: '',
         mancode: '',
-        imageUrl: '',
-        remarks: ''
+        productcost: 0,
+        productcharges: 0,
+        remarks: '',
+        additionalImages: '',
+        exchangeRate: 0.19
       })
       setShowAddForm(false)
 
@@ -322,235 +330,82 @@ export default function ProductsPage() {
         <Card className="mb-6">
           <CardContent className="pt-6">
             <div className="space-y-6">
-              <table className="w-full">
-                <tbody className="divide-y">
-                  <tr>
-                    <td className="py-2 pr-4 w-1/4">
-                      <Label htmlFor="name">Product Name</Label>
-                    </td>
-                    <td className="py-2">
-                      <Input
-                        id="name"
-                        value={newProduct.name}
-                        onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
-                      />
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="py-2 pr-4">
-                      <Label htmlFor="description">Description</Label>
-                    </td>
-                    <td className="py-2">
-                      <Textarea
-                        id="description"
-                        value={newProduct.description}
-                        onChange={e => setNewProduct({ ...newProduct, description: e.target.value })}
-                      />
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="py-2 pr-4">
-                      <Label htmlFor="category">Category</Label>
-                    </td>
-                    <td className="py-2">
-                      <Select
-                        value={newProduct.category}
-                        onValueChange={value => setNewProduct({ ...newProduct, category: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CATEGORIES.map(category => (
-                            <SelectItem key={category} value={category}>
-                              {category.charAt(0).toUpperCase() + category.slice(1)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="py-2 pr-4">
-                      <Label htmlFor="stock">Stock</Label>
-                    </td>
-                    <td className="py-2">
-                      <Input
-                        id="stock"
-                        type="number"
-                        max="10"
-                        value={newProduct.stock}
-                        onChange={e => setNewProduct({ ...newProduct, stock: parseInt(e.target.value) })}
-                      />
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="py-2 pr-4">
-                      <Label htmlFor="imageUrl">Image URL</Label>
-                    </td>
-                    <td className="py-2">
-                      <Input
-                        id="imageUrl"
-                        value={newProduct.imageUrl}
-                        onChange={e => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
-                      />
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="py-2 pr-4">
-                      <Label htmlFor="additionalImages">Additional Image URLs</Label>
-                    </td>
-                    <td className="py-2">
-                      <Textarea
-                        id="additionalImages"
-                        value={newProduct.additionalImages?.join('\n') || ''}
-                        onChange={e => setNewProduct({ 
-                          ...newProduct, 
-                          additionalImages: e.target.value.split('\n').filter(url => url.trim())
-                        })}
-                        placeholder="One URL per line"
-                      />
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="py-2 pr-4">
-                      <Label htmlFor="styleCode">Style Code</Label>
-                    </td>
-                    <td className="py-2">
-                      <Input
-                        id="styleCode"
-                        value={newProduct.styleCode}
-                        onChange={e => setNewProduct({ ...newProduct, styleCode: e.target.value })}
-                      />
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="py-2 pr-4">
-                      <Label htmlFor="sku">SKU</Label>
-                    </td>
-                    <td className="py-2">
-                      <Input
-                        id="sku"
-                        value={newProduct.sku}
-                        onChange={e => setNewProduct({ ...newProduct, sku: e.target.value })}
-                      />
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="py-2 pr-4">
-                      <Label htmlFor="mancode">Manufacturer Code</Label>
-                    </td>
-                    <td className="py-2">
-                      <Input
-                        id="mancode"
-                        value={newProduct.mancode}
-                        onChange={e => setNewProduct({ ...newProduct, mancode: e.target.value })}
-                      />
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="py-2 pr-4">
-                      <Label htmlFor="color">Color</Label>
-                    </td>
-                    <td className="py-2">
-                      <Input
-                        id="color"
-                        value={newProduct.color}
-                        onChange={e => setNewProduct({ ...newProduct, color: e.target.value })}
-                      />
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="py-2 pr-4">
-                      <Label htmlFor="material">Material</Label>
-                    </td>
-                    <td className="py-2">
-                      <Input
-                        id="material"
-                        value={newProduct.material}
-                        onChange={e => setNewProduct({ ...newProduct, material: e.target.value })}
-                      />
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="py-2 pr-4">
-                      <Label htmlFor="productcost">Product Cost (RMB)</Label>
-                    </td>
-                    <td className="py-2">
-                      <Input
-                        id="productcost"
-                        type="number"
-                        step="0.01"
-                        value={newProduct.productcost}
-                        onChange={e => setNewProduct({ ...newProduct, productcost: parseFloat(e.target.value) })}
-                      />
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="py-2 pr-4">
-                      <Label htmlFor="productcharges">Product Charges (RMB)</Label>
-                    </td>
-                    <td className="py-2">
-                      <Input
-                        id="productcharges"
-                        type="number"
-                        step="0.01"
-                        value={newProduct.productcharges}
-                        onChange={e => setNewProduct({ ...newProduct, productcharges: parseFloat(e.target.value) })}
-                      />
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="py-2 pr-4">
-                      <Label htmlFor="exchangeRate">Exchange Rate (RMB to CAD)</Label>
-                    </td>
-                    <td className="py-2">
-                      <Input
-                        id="exchangeRate"
-                        type="number"
-                        step="0.01"
-                        value={newProduct.exchangeRate}
-                        onChange={e => setNewProduct({ ...newProduct, exchangeRate: parseFloat(e.target.value) })}
-                      />
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="py-2 pr-4">
-                      <Label htmlFor="remarks">Remarks</Label>
-                    </td>
-                    <td className="py-2">
-                      <Textarea
-                        id="remarks"
-                        value={newProduct.remarks}
-                        onChange={e => setNewProduct({ ...newProduct, remarks: e.target.value })}
-                      />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowAddForm(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleAddProduct}>
-                  Create Product
-                </Button>
-              </div>
+              <form onSubmit={handleAddProduct} className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Name</Label>
+                  <Input id="name" name="name" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} required />
+                </div>
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea id="description" name="description" value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} required />
+                </div>
+                <div>
+                  <Label htmlFor="price">Price</Label>
+                  <Input id="price" name="price" type="number" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })} required />
+                </div>
+                <div>
+                  <Label htmlFor="category">Category</Label>
+                  <Select name="category" value={newProduct.category} onValueChange={(value) => setNewProduct({ ...newProduct, category: value as Category })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map(category => (
+                        <SelectItem key={category} value={category}>{category}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="stock">Stock</Label>
+                  <Input id="stock" name="stock" type="number" value={newProduct.stock} onChange={(e) => setNewProduct({ ...newProduct, stock: parseInt(e.target.value) })} required />
+                </div>
+                <div>
+                  <Label htmlFor="styleCode">Style Code</Label>
+                  <Input id="styleCode" name="styleCode" value={newProduct.styleCode} onChange={(e) => setNewProduct({ ...newProduct, styleCode: e.target.value })} required />
+                </div>
+                <div>
+                  <Label htmlFor="sku">SKU</Label>
+                  <Input id="sku" name="sku" value={newProduct.sku} onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })} required />
+                </div>
+                <div>
+                  <Label htmlFor="mancode">Manufacturer Code</Label>
+                  <Input id="mancode" name="mancode" value={newProduct.mancode} onChange={(e) => setNewProduct({ ...newProduct, mancode: e.target.value })} />
+                </div>
+                <div>
+                  <Label htmlFor="productcost">Product Cost</Label>
+                  <Input id="productcost" name="productcost" type="number" value={newProduct.productcost} onChange={(e) => setNewProduct({ ...newProduct, productcost: parseFloat(e.target.value) })} required />
+                </div>
+                <div>
+                  <Label htmlFor="productcharges">Product Charges</Label>
+                  <Input id="productcharges" name="productcharges" type="number" value={newProduct.productcharges} onChange={(e) => setNewProduct({ ...newProduct, productcharges: parseFloat(e.target.value) })} required />
+                </div>
+                <div>
+                  <Label htmlFor="exchangeRate">Exchange Rate</Label>
+                  <Input id="exchangeRate" name="exchangeRate" type="number" value={newProduct.exchangeRate} onChange={(e) => setNewProduct({ ...newProduct, exchangeRate: parseFloat(e.target.value) })} required />
+                </div>
+                <div>
+                  <Label htmlFor="imageUrl">Image URL</Label>
+                  <Input id="imageUrl" name="imageUrl" value={newProduct.imageUrl} onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })} />
+                </div>
+                <div>
+                  <Label htmlFor="color">Color</Label>
+                  <Input id="color" name="color" value={newProduct.color} onChange={(e) => setNewProduct({ ...newProduct, color: e.target.value })} />
+                </div>
+                <div>
+                  <Label htmlFor="material">Material</Label>
+                  <Input id="material" name="material" value={newProduct.material} onChange={(e) => setNewProduct({ ...newProduct, material: e.target.value })} />
+                </div>
+                <div>
+                  <Label htmlFor="remarks">Remarks</Label>
+                  <Textarea id="remarks" name="remarks" value={newProduct.remarks} onChange={(e) => setNewProduct({ ...newProduct, remarks: e.target.value })} />
+                </div>
+                <div>
+                  <Label htmlFor="additionalImages">Additional Images (comma-separated URLs)</Label>
+                  <Input id="additionalImages" name="additionalImages" value={newProduct.additionalImages} onChange={(e) => setNewProduct({ ...newProduct, additionalImages: e.target.value })} />
+                </div>
+                <Button type="submit">Add Product</Button>
+              </form>
             </div>
           </CardContent>
         </Card>

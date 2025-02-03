@@ -6,12 +6,23 @@ import bcrypt from 'bcryptjs'
 export async function POST(request: Request) {
   try {
     const { username, password } = await request.json()
+    console.log('Attempting login for username:', username)
 
     const admin = await prisma.admin.findUnique({
       where: { username }
     })
 
-    if (!admin || !(await bcrypt.compare(password, admin.password))) {
+    if (!admin) {
+      console.log('Admin not found for username:', username)
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid credentials' 
+      }, { status: 401 })
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, admin.password)
+    if (!isPasswordValid) {
+      console.log('Invalid password for username:', username)
       return NextResponse.json({ 
         success: false, 
         error: 'Invalid credentials' 
@@ -35,6 +46,7 @@ export async function POST(request: Request) {
 
     return response
   } catch (error) {
+    console.error('Login error:', error)
     return NextResponse.json({ 
       success: false, 
       error: 'Login failed' 
