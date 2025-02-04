@@ -56,6 +56,9 @@ export async function PATCH(
       productcharges: Number(updates.productcharges),
       remarks: updates.remarks,
       exchangeRate: Number(updates.exchangeRate),
+      additionalImages: Array.isArray(updates.additionalImages) 
+        ? updates.additionalImages 
+        : updates.additionalImages?.split('\n').filter(Boolean).map((url: string) => url.trim()) || [],
       updatedAt: new Date()
     }
 
