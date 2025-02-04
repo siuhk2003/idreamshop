@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/select"
 import { Upload } from 'lucide-react'
 import { format } from 'date-fns'
+import Image from 'next/image'
+import { getCloudinaryUrl } from '@/lib/utils'
 
 const CATEGORIES = ['new', 'regular', 'clearance'] as const
 type Category = typeof CATEGORIES[number]
@@ -824,6 +826,38 @@ export default function ProductsPage() {
                         <div>
                           <span className="font-semibold">Category:</span> {product.category.charAt(0).toUpperCase() + product.category.slice(1)}
                         </div>
+
+                        <div>
+                          <span className="font-semibold">Main Image:</span>
+                          {product.imageUrl && (
+                            <div className="mt-2">
+                              <Image
+                                src={getCloudinaryUrl(product.imageUrl)}
+                                alt={product.name}
+                                width={200}
+                                height={200}
+                                className="rounded-lg"
+                              />
+                            </div>
+                          )}
+                        </div>
+                        {product.additionalImages && product.additionalImages.length > 0 && (
+                          <div>
+                            <span className="font-semibold">Additional Images:</span>
+                            <div className="mt-2 grid grid-cols-2 gap-2">
+                              {product.additionalImages.map((url, index) => (
+                                <Image
+                                  key={index}
+                                  src={getCloudinaryUrl(url)}
+                                  alt={`${product.name} - ${index + 1}`}
+                                  width={100}
+                                  height={100}
+                                  className="rounded-lg"
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {product.remarks && (
