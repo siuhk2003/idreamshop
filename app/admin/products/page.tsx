@@ -202,7 +202,7 @@ export default function ProductsPage() {
     setEditingId(product.id)
     setEditForm({
       ...product,
-      originalPrice: product.originalPrice || product.price,
+      originalPrice: product.originalPrice || null,
       wholesalePrice: product.wholesalePrice || null,
       mancode: product.mancode || '',
       productcost: product.productcost || 0,
@@ -468,20 +468,14 @@ export default function ProductsPage() {
           <Card key={product.id}>
             <CardContent className="p-6">
               <div className="flex gap-6">
-                <div className="w-48 space-y-2">
-                  <img 
-                    src={product.imageUrl} 
+                <div className="w-32">
+                  <Image
+                    src={getCloudinaryUrl(product.imageUrl)}
                     alt={product.name}
-                    className="w-full h-48 object-cover rounded"
+                    width={128}
+                    height={128}
+                    className="w-full h-32 object-cover rounded-lg"
                   />
-                  {product.additionalImages?.map((img, index) => (
-                    <img 
-                      key={index}
-                      src={img} 
-                      alt={`${product.name} view ${index + 1}`}
-                      className="w-full h-24 object-cover rounded"
-                    />
-                  ))}
                 </div>
                 
                 <div className="flex-grow">
@@ -650,7 +644,10 @@ export default function ProductsPage() {
                                 type="number"
                                 step="0.01"
                                 value={editForm.originalPrice || ''}
-                                onChange={e => setEditForm({ ...editForm, originalPrice: parseFloat(e.target.value) })}
+                                onChange={e => setEditForm({ 
+                                  ...editForm, 
+                                  originalPrice: e.target.value ? parseFloat(e.target.value) : null 
+                                })}
                               />
                             </td>
                           </tr>
@@ -828,32 +825,19 @@ export default function ProductsPage() {
                         </div>
 
                         <div>
-                          <span className="font-semibold">Main Image:</span>
-                          {product.imageUrl && (
-                            <div className="mt-2">
-                              <Image
-                                src={getCloudinaryUrl(product.imageUrl)}
-                                alt={product.name}
-                                width={200}
-                                height={200}
-                                className="rounded-lg"
-                              />
-                            </div>
-                          )}
+                          <span className="font-semibold">Main Image URL:</span>
+                          <div className="mt-1 text-xs text-gray-500 break-all">
+                            {product.imageUrl}
+                          </div>
                         </div>
                         {product.additionalImages && product.additionalImages.length > 0 && (
                           <div>
-                            <span className="font-semibold">Additional Images:</span>
-                            <div className="mt-2 grid grid-cols-2 gap-2">
+                            <span className="font-semibold">Additional Image URLs:</span>
+                            <div className="mt-1 space-y-1">
                               {product.additionalImages.map((url, index) => (
-                                <Image
-                                  key={index}
-                                  src={getCloudinaryUrl(url)}
-                                  alt={`${product.name} - ${index + 1}`}
-                                  width={100}
-                                  height={100}
-                                  className="rounded-lg"
-                                />
+                                <div key={index} className="text-xs text-gray-500 break-all">
+                                  {url}
+                                </div>
                               ))}
                             </div>
                           </div>
