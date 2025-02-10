@@ -382,28 +382,14 @@ export default function CheckoutPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main className="flex-grow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <h1 className="text-3xl font-bold mb-8">Checkout</h1>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Shipping Information</h2>
-                {isLoggedIn && (
-                  <Button
-                    onClick={fetchShippingInfo}
-                    variant="outline"
-                    size="sm"
-                    className="ml-4"
-                  >
-                    Load My Profile
-                  </Button>
-                )}
-              </div>
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+      <main className="flex-grow container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Shipping Form */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+                <h2 className="text-xl font-semibold mb-4">Shipping Information</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="firstName">First Name</Label>
                     <Input
@@ -544,106 +530,92 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <div className="mt-8">
+              {/* Payment Section */}
+              <div className="bg-white rounded-lg shadow p-4 sm:p-6">
                 <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
                 <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      id="stripe"
-                      name="paymentMethod"
-                      value="stripe"
-                      checked={paymentMethod === 'stripe'}
-                      onChange={(e) => setPaymentMethod(e.target.value as 'stripe' | 'etransfer')}
-                    />
-                    <label htmlFor="stripe">Credit Card (Stripe)</label>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      id="etransfer"
-                      name="paymentMethod"
-                      value="etransfer"
-                      checked={paymentMethod === 'etransfer'}
-                      onChange={(e) => setPaymentMethod(e.target.value as 'stripe' | 'etransfer')}
-                    />
-                    <label htmlFor="etransfer">E-Transfer</label>
-                  </div>
-                </div>
-              </div>
-
-              {paymentMethod === 'stripe' ? (
-                <Elements stripe={getStripe()} options={{
-                  mode: 'payment',
-                  amount: Math.round(total * 100),
-                  currency: 'cad',
-                  appearance: {
-                    theme: 'stripe',
-                  },
-                }}>
-                  <PaymentForm 
-                    amount={total}
-                    onSuccess={handlePaymentSuccess}
-                    shippingInfo={shippingInfo}
-                  />
-                </Elements>
-              ) : (
-                <div className="mt-4 p-4 border rounded-lg bg-gray-50">
-                  <h3 className="font-semibold mb-2">E-Transfer Instructions</h3>
-                  <p>Please send the total amount of ${total.toFixed(2)} to:</p>
-                  <p className="font-mono mt-2">cs@idreamshop.ca</p>
-                  <p className="text-sm mt-4">
-                    Note: Your order will be processed after payment is received.
-                  </p>
-                  <Button 
-                    onClick={handleETransferCheckout}
-                    className="w-full mt-4"
-                  >
-                    Complete Order
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <div className="space-y-4">
-                  {items.map(item => (
-                    <div key={item.id} className="flex justify-between">
-                      <div>
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <Button
+                      type="button"
+                      variant={paymentMethod === 'stripe' ? 'default' : 'outline'}
+                      className={`flex-1 justify-center py-6 ${
+                        paymentMethod === 'stripe'
+                          ? 'bg-blue-600 text-white hover:bg-blue-700 ring-2 ring-blue-600 ring-offset-2'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                      onClick={() => setPaymentMethod('stripe')}
+                    >
+                      <div className="flex flex-col items-center">
+                        <span className="text-lg">Credit Card</span>
+                        <span className="text-sm">{paymentMethod === 'stripe' ? 'Selected' : 'Click to select'}</span>
                       </div>
-                      <p>${(item.price * item.quantity).toFixed(2)}</p>
-                    </div>
-                  ))}
-                  <div className="mt-6">
-                    <h3 className="text-lg font-semibold mb-2">Discount Code</h3>
-                    <div className="flex gap-2">
-                      <Input
-                        type="text"
-                        value={discountCode}
-                        onChange={(e) => setDiscountCode(e.target.value)}
-                        placeholder="Enter discount code"
-                        className="flex-grow"
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={paymentMethod === 'etransfer' ? 'default' : 'outline'}
+                      className={`flex-1 justify-center py-6 ${
+                        paymentMethod === 'etransfer'
+                          ? 'bg-blue-600 text-white hover:bg-blue-700 ring-2 ring-blue-600 ring-offset-2'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                      onClick={() => setPaymentMethod('etransfer')}
+                    >
+                      <div className="flex flex-col items-center">
+                        <span className="text-lg">E-Transfer</span>
+                        <span className="text-sm">{paymentMethod === 'etransfer' ? 'Selected' : 'Click to select'}</span>
+                      </div>
+                    </Button>
+                  </div>
+                  {paymentMethod === 'stripe' ? (
+                    <Elements stripe={getStripe()} options={{
+                      mode: 'payment',
+                      amount: Math.round(total * 100),
+                      currency: 'cad',
+                      appearance: {
+                        theme: 'stripe',
+                      },
+                    }}>
+                      <PaymentForm 
+                        amount={total}
+                        onSuccess={handlePaymentSuccess}
+                        shippingInfo={shippingInfo}
                       />
+                    </Elements>
+                  ) : (
+                    <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                      <h3 className="font-semibold mb-2">E-Transfer Instructions</h3>
+                      <p>Please send the total amount of ${total.toFixed(2)} to:</p>
+                      <p className="font-mono mt-2">cs@idreamshop.ca</p>
+                      <p className="text-sm mt-4">
+                        Note: Your order will be processed after payment is received.
+                      </p>
                       <Button 
-                        onClick={handleApplyDiscount}
-                        variant="outline"
+                        onClick={handleETransferCheckout}
+                        className="w-full mt-4"
                       >
-                        Apply
+                        Complete Order
                       </Button>
                     </div>
-                    {discountError && (
-                      <p className="text-red-500 text-sm mt-1">{discountError}</p>
-                    )}
-                    {discount > 0 && (
-                      <p className="text-green-600 text-sm mt-1">
-                        Discount applied: {discount}% off
-                      </p>
-                    )}
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Order Summary */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-lg shadow p-4 sm:p-6 sticky top-4">
+                <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+                <div className="space-y-4">
+                  {/* Cart Items Summary */}
+                  <div className="space-y-2">
+                    {items.map(item => (
+                      <div key={item.id} className="flex justify-between text-sm">
+                        <span>{item.name} × {item.quantity}</span>
+                        <span>${(item.price * item.quantity).toFixed(2)}</span>
+                      </div>
+                    ))}
                   </div>
+
                   <div className="border-t pt-4 space-y-2">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
@@ -667,7 +639,7 @@ export default function CheckoutPage() {
                       <span>Shipping</span>
                       <span>${shippingCost.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between font-bold text-lg border-t pt-2">
+                    <div className="flex justify-between font-bold text-lg">
                       <span>Total</span>
                       <span>${total.toFixed(2)}</span>
                     </div>

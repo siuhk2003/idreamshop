@@ -68,9 +68,10 @@ export function ProductDetails({ product, variants = [] }: ProductDetailsProps) 
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div className="relative">
+      {/* Left side - Images */}
+      <div className="space-y-4">
         {/* Main Image */}
-        <div className="relative aspect-square">
+        <div className="relative aspect-square w-full">
           <Image
             src={getCloudinaryUrl(allImages[currentImageIndex])}
             alt={currentProduct.name}
@@ -80,113 +81,112 @@ export function ProductDetails({ product, variants = [] }: ProductDetailsProps) 
           />
         </div>
         
-        {/* Thumbnail Navigation */}
+        {/* Thumbnail Navigation - Horizontal scroll on mobile */}
         {allImages.length > 1 && (
-          <div className="mt-4 flex gap-2 overflow-x-auto">
+          <div className="flex overflow-x-auto gap-2 pb-2 snap-x">
             {allImages.map((image, index) => (
-              <button
+              <div 
                 key={index}
+                className={`relative flex-none w-20 aspect-square cursor-pointer rounded-md overflow-hidden snap-start
+                  ${currentImageIndex === index ? 'ring-2 ring-blue-500' : ''}`}
                 onClick={() => setCurrentImageIndex(index)}
-                className={`
-                  relative w-20 h-20 flex-shrink-0 rounded
-                  ${currentImageIndex === index ? 'ring-2 ring-blue-500' : 'ring-1 ring-gray-200'}
-                  hover:ring-2 hover:ring-blue-300 transition-all
-                `}
               >
                 <Image
                   src={getCloudinaryUrl(image)}
-                  alt={`${currentProduct.name} view ${index + 1}`}
+                  alt={`Product view ${index + 1}`}
                   fill
-                  className="object-cover rounded"
+                  className="object-cover"
                 />
-              </button>
+              </div>
             ))}
           </div>
         )}
       </div>
 
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">{currentProduct.name}</h1>
-        <p className="text-gray-600 mb-6">{currentProduct.description}</p>
-        
+      {/* Right side - Product Info */}
+      <div className="flex flex-col space-y-6">
+        {/* Product Title and Price */}
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            {currentProduct.name}
+          </h1>
+          <div className="space-y-1">
+            {currentProduct.originalPrice ? (
+              <>
+                <p className="text-lg text-gray-500 line-through">
+                  ${currentProduct.originalPrice.toFixed(2)}
+                </p>
+                <p className="text-2xl font-bold text-red-600">
+                  ${currentProduct.price.toFixed(2)}
+                </p>
+              </>
+            ) : (
+              <p className="text-2xl font-bold text-gray-900">
+                ${currentProduct.price.toFixed(2)}
+              </p>
+            )}
+          </div>
+        </div>
+
         {/* Product Details Table */}
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-2">Details</h2>
-          <table className="w-full">
-            <tbody>
-              {/* Color Selection */}
-              <tr>
-                <td className="py-2 text-gray-600 w-24">Color</td>
-                <td>
-                  <Select
-                    value={selectedColor}
-                    onValueChange={setSelectedColor}
+        <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+          {/* Color Selection */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Color</label>
+            <Select
+              value={selectedColor}
+              onValueChange={setSelectedColor}
+            >
+              <SelectTrigger className="w-full sm:w-[200px] bg-white">
+                <SelectValue placeholder="Select a color" />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                {availableColors.map(({ color, inStock }) => (
+                  <SelectItem
+                    key={color}
+                    value={color}
+                    disabled={!inStock}
+                    className="hover:bg-gray-100"
                   >
-                    <SelectTrigger className="w-[200px] bg-white">
-                      <SelectValue placeholder="Select a color" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      {availableColors.map(({ color, inStock }) => (
-                        <SelectItem
-                          key={color}
-                          value={color}
-                          disabled={!inStock}
-                          className="hover:bg-gray-100"
-                        >
-                          <span className={!inStock ? 'text-gray-400' : ''}>
-                            {color} {!inStock && '(Out of Stock)'}
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </td>
-              </tr>
-
-              {/* Material */}
-              <tr>
-                <td className="py-2 text-gray-600">Material</td>
-                <td>{currentProduct.material}</td>
-              </tr>
-
-              {/* Quantity */}
-              <tr>
-                <td className="py-2 text-gray-600">Quantity</td>
-                <td>
-                  <div className="flex items-center gap-4">
-                    <Input
-                      type="number"
-                      min="1"
-                      max={currentProduct.stock}
-                      value={quantity}
-                      onChange={(e) => setQuantity(Math.min(parseInt(e.target.value) || 1, currentProduct.stock))}
-                      className="w-20"
-                    />
-                    <span className="text-sm text-gray-600">
-                      {getStockStatus(currentProduct.stock)}
+                    <span className={!inStock ? 'text-gray-400' : ''}>
+                      {color} {!inStock && '(Out of Stock)'}
                     </span>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Price Display */}
-        <div className="mb-8">
-          {currentProduct.originalPrice ? (
-            <>
-              <p className="text-gray-600 line-through">${currentProduct.originalPrice.toFixed(2)}</p>
-              <p className="text-2xl font-bold text-red-600">${currentProduct.price.toFixed(2)}</p>
-            </>
-          ) : (
-            <p className="text-2xl font-bold text-gray-900">${currentProduct.price.toFixed(2)}</p>
+          {/* Material */}
+          {currentProduct.material && (
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Material</label>
+              <p className="text-gray-900">{currentProduct.material}</p>
+            </div>
           )}
+
+          {/* Quantity Selection */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Quantity</label>
+            <div className="flex items-center gap-4">
+              <Input
+                type="number"
+                min="1"
+                max={currentProduct.stock}
+                value={quantity}
+                onChange={(e) => setQuantity(Math.min(parseInt(e.target.value) || 1, currentProduct.stock))}
+                className="w-20"
+              />
+              <span className="text-sm text-gray-600">
+                {getStockStatus(currentProduct.stock)}
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* Add to Cart Button */}
+        {/* Add to Cart Button - Full width on mobile */}
         <Button 
-          className="w-full mt-4 bg-blue-500 text-white hover:bg-blue-600"
+          className="w-full bg-blue-500 text-white hover:bg-blue-600 py-6 text-lg"
           disabled={currentProduct.stock < quantity}
           onClick={handleAddToCart}
         >

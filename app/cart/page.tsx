@@ -33,72 +33,81 @@ function CartContent() {
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
         {message && (
-          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-4">
+          <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg">
             {message}
           </div>
         )}
 
         {items.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-lg mb-4">Your cart is empty</p>
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold mb-4">Your cart is empty</h2>
             <Link href="/products">
               <Button>Continue Shopping</Button>
             </Link>
           </div>
         ) : (
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="md:col-span-2 space-y-4">
-              {items.map((item) => (
-                <div key={item.id} className="flex gap-4 bg-white p-4 rounded-lg shadow">
-                  <div className="relative w-24 h-24">
-                    <Image
-                      loader={cloudinaryLoader}
-                      src={item.imageUrl}
-                      alt={item.name || 'Product image'}
-                      fill
-                      className="object-cover rounded"
-                      sizes="(max-width: 768px) 96px, 96px"
-                      onError={(e) => {
-                        console.error('Image Load Error:', {
-                          src: item.imageUrl,
-                          error: e
-                        })
-                      }}
-                    />
-                  </div>
-                  <div className="flex-grow">
-                    <h3 className="font-semibold">{item.name}</h3>
-                    <p className="text-gray-600">${item.price.toFixed(2)}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <select
-                        value={item.quantity}
-                        onChange={(e) => updateQuantity(item.id, parseInt(e.target.value))}
-                        className="border rounded p-1"
-                      >
-                        {[...Array(10)].map((_, i) => (
-                          <option key={i + 1} value={i + 1}>
-                            {i + 1}
-                          </option>
-                        ))}
-                      </select>
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => removeItem(item.id)}
-                      >
-                        Remove
-                      </Button>
+          <div className="space-y-8">
+            {/* Cart Items */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="divide-y divide-gray-200">
+                {items.map((item) => (
+                  <div key={item.id} className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      {/* Product Image */}
+                      <div className="relative w-full sm:w-24 h-24 flex-shrink-0">
+                        <Image
+                          src={getCloudinaryUrl(item.imageUrl)}
+                          alt={item.name}
+                          fill
+                          className="object-cover rounded"
+                        />
+                      </div>
+
+                      {/* Product Details */}
+                      <div className="flex-grow space-y-2">
+                        <h3 className="font-medium text-gray-900">{item.name}</h3>
+                        <div className="flex flex-col sm:flex-row sm:justify-between gap-2">
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                              >
+                                -
+                              </Button>
+                              <span className="w-8 text-center">{item.quantity}</span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateQuantity(item.id, Math.min(item.stock, item.quantity + 1))}
+                              >
+                                +
+                              </Button>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeItem(item.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    ${(item.price * item.quantity).toFixed(2)}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow h-fit">
-              <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+
+            {/* Order Summary */}
+            <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+              <h2 className="text-lg font-medium mb-4">Order Summary</h2>
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Subtotal</span>

@@ -78,6 +78,11 @@ export default function AdminLayout({
               <Link href="/" className="inline-flex items-center px-4 py-2">
                 Back to Shop
               </Link>
+              <Link href="/admin/visits">
+                <Button variant="ghost" className="w-full justify-start">
+                  Website Visits
+                </Button>
+              </Link>
               <Button variant="outline" onClick={handleLogout}>
                 Logout
               </Button>
