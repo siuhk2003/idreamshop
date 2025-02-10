@@ -43,6 +43,9 @@ interface Product {
   createdAt: string | Date
   updatedAt: string | Date
   exchangeRate: number
+  wholesaleCo: string | null
+  producttype: string | null
+  display: string
 }
 
 const ITEMS_PER_PAGE = 10
@@ -101,6 +104,9 @@ export default function ProductsPage() {
     remarks?: string
     additionalImages: string
     exchangeRate: number
+    wholesaleCo: string
+    producttype: string
+    display: string
   }>({
     name: '',
     description: '',
@@ -117,7 +123,10 @@ export default function ProductsPage() {
     productcharges: 0,
     remarks: '',
     additionalImages: '',
-    exchangeRate: 0.19
+    exchangeRate: 0.19,
+    wholesaleCo: '',
+    producttype: '',
+    display: 'Yes'
   })
   const [showAddForm, setShowAddForm] = useState(false)
   const [importing, setImporting] = useState(false)
@@ -129,7 +138,7 @@ export default function ProductsPage() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('/api/products', {
+      const response = await fetch('/api/products?isAdmin=true', {
         credentials: 'include'
       })
       const data = await response.json()
@@ -189,7 +198,10 @@ export default function ProductsPage() {
         productcharges: 0,
         remarks: '',
         additionalImages: '',
-        exchangeRate: 0.19
+        exchangeRate: 0.19,
+        wholesaleCo: '',
+        producttype: '',
+        display: 'Yes'
       })
       setShowAddForm(false)
 
@@ -208,7 +220,10 @@ export default function ProductsPage() {
       productcost: product.productcost || 0,
       productcharges: product.productcharges || 0,
       remarks: product.remarks || '',
-      exchangeRate: product.exchangeRate
+      exchangeRate: product.exchangeRate,
+      wholesaleCo: product.wholesaleCo || '',
+      producttype: product.producttype || '',
+      display: product.display || 'Yes'
     })
   }
 
@@ -227,7 +242,10 @@ export default function ProductsPage() {
           productcost: editForm.productcost,
           productcharges: editForm.productcharges,
           remarks: editForm.remarks || null,
-          exchangeRate: editForm.exchangeRate
+          exchangeRate: editForm.exchangeRate,
+          wholesaleCo: editForm.wholesaleCo || null,
+          producttype: editForm.producttype || null,
+          display: editForm.display || 'Yes'
         })
       })
 
@@ -455,6 +473,40 @@ export default function ProductsPage() {
                 <div>
                   <Label htmlFor="additionalImages">Additional Images (comma-separated URLs)</Label>
                   <Input id="additionalImages" name="additionalImages" value={newProduct.additionalImages} onChange={(e) => setNewProduct({ ...newProduct, additionalImages: e.target.value })} />
+                </div>
+                <div>
+                  <Label htmlFor="wholesaleCo">Wholesale Company</Label>
+                  <Input
+                    id="wholesaleCo"
+                    name="wholesaleCo"
+                    value={newProduct.wholesaleCo}
+                    onChange={(e) => setNewProduct({ ...newProduct, wholesaleCo: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="producttype">Product Type</Label>
+                  <Input
+                    id="producttype"
+                    name="producttype"
+                    value={newProduct.producttype}
+                    onChange={(e) => setNewProduct({ ...newProduct, producttype: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="display">Display</Label>
+                  <Select 
+                    name="display" 
+                    value={newProduct.display} 
+                    onValueChange={(value) => setNewProduct({ ...newProduct, display: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select display option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Yes">Yes</SelectItem>
+                      <SelectItem value="No">No</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button type="submit">Add Product</Button>
               </form>
@@ -748,6 +800,52 @@ export default function ProductsPage() {
                           </tr>
 
                           <tr>
+                            <td className="py-2 pr-4">
+                              <Label htmlFor="wholesaleCo">Wholesale Company</Label>
+                            </td>
+                            <td className="py-2">
+                              <Input
+                                id="wholesaleCo"
+                                value={editForm.wholesaleCo || ''}
+                                onChange={e => setEditForm({ ...editForm, wholesaleCo: e.target.value })}
+                              />
+                            </td>
+                          </tr>
+
+                          <tr>
+                            <td className="py-2 pr-4">
+                              <Label htmlFor="producttype">Product Type</Label>
+                            </td>
+                            <td className="py-2">
+                              <Input
+                                id="producttype"
+                                value={editForm.producttype || ''}
+                                onChange={e => setEditForm({ ...editForm, producttype: e.target.value })}
+                              />
+                            </td>
+                          </tr>
+
+                          <tr>
+                            <td className="py-2 pr-4">
+                              <Label htmlFor="display">Display</Label>
+                            </td>
+                            <td className="py-2">
+                              <Select 
+                                value={editForm.display} 
+                                onValueChange={(value) => setEditForm({ ...editForm, display: value })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select display option" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Yes">Yes</SelectItem>
+                                  <SelectItem value="No">No</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </td>
+                          </tr>
+
+                          <tr>
                             <td className="py-2 pr-4">Created At</td>
                             <td className="py-2 text-gray-600">{formatDate(product.createdAt)}</td>
                           </tr>
@@ -842,6 +940,16 @@ export default function ProductsPage() {
                             </div>
                           </div>
                         )}
+
+                        <div>
+                          <span className="font-semibold">Wholesale Company:</span> {product.wholesaleCo || '-'}
+                        </div>
+                        <div>
+                          <span className="font-semibold">Product Type:</span> {product.producttype || '-'}
+                        </div>
+                        <div>
+                          <span className="font-semibold">Display:</span> {product.display}
+                        </div>
                       </div>
 
                       {product.remarks && (

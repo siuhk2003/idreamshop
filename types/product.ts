@@ -23,6 +23,9 @@ export interface Product {
   updatedAt: string | Date
   exchangeRate: number
   version: number
+  wholesaleCo?: string
+  producttype?: string
+  display: string
 }
 
 export type { Category } 

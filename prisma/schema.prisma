@@ -31,6 +31,9 @@ model Product {
   OrderItem     OrderItem[]
   version       Int      @default(0)
   additionalImages String[] @default([])
+  wholesaleCo   String?   // Added
+  producttype   String?   // Added
+  display       String    @default("Yes")  // Added
 
   @@index([styleCode])
 }

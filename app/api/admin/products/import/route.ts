@@ -10,7 +10,8 @@ const REQUIRED_HEADERS = [
 ]
 const OPTIONAL_HEADERS = [
   'originalPrice', 'wholesalePrice', 'imageUrl', 'color', 
-  'material', 'remarks', 'additionalImages'
+  'material', 'remarks', 'additionalImages', 'wholesaleCo',
+  'producttype', 'display'
 ]
 const VALID_CATEGORIES = ['new', 'regular', 'clearance']
 
@@ -89,7 +90,10 @@ export const POST = async (request: Request) => {
             productcharges: parseFloat(row.productcharges),
             remarks: row.remarks || null,
             additionalImages: row.additionalImages ? row.additionalImages.split(',').map((url: string) => url.trim()) : [],
-            exchangeRate: parseFloat(row.exchangeRate)
+            exchangeRate: parseFloat(row.exchangeRate),
+            wholesaleCo: row.wholesaleCo || null,
+            producttype: row.producttype || null,
+            display: row.display || 'Yes',
           }
         })
       })

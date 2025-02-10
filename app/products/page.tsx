@@ -16,8 +16,8 @@ export default function ProductsPage() {
     <div className="flex flex-col min-h-screen bg-gray-200">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="flex gap-8">
-          <Suspense fallback={<div className="w-64">Loading filters...</div>}>
+        <div className="flex flex-col lg:flex-row gap-8">
+          <Suspense fallback={<div className="w-full lg:w-64">Loading filters...</div>}>
             <FilterSidebar />
           </Suspense>
           <div className="flex-1">

@@ -25,6 +25,7 @@ const ITEMS_PER_PAGE = 8
 export function ProductGrid() {
   const searchParams = useSearchParams()
   const category = searchParams.get('category') || 'all'
+  const type = searchParams.get('type') || 'all'
   const [showInStockOnly, setShowInStockOnly] = useState(false)
   const [state, setState] = useState({
     currentPage: 1,
@@ -36,7 +37,7 @@ export function ProductGrid() {
     const fetchProducts = async () => {
       setState(prev => ({ ...prev, loading: true }))
       try {
-        const response = await fetch(`/api/products?category=${category}`)
+        const response = await fetch(`/api/products?category=${category}&type=${type}`)
         const data = await response.json()
         
         if (data.success) {
@@ -55,7 +56,7 @@ export function ProductGrid() {
     }
 
     fetchProducts()
-  }, [category])
+  }, [category, type])
 
   if (state.loading) {
     return <div>Loading...</div>
@@ -77,7 +78,7 @@ export function ProductGrid() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between bg-white p-4 rounded-lg shadow space-y-4 sm:space-y-0">
         <div className="flex items-center space-x-2">
           <Switch
             id="stock-filter"
@@ -94,8 +95,8 @@ export function ProductGrid() {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
+        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
           {paginatedProducts.map((product) => (
             <ProductCard
               key={product.id}
@@ -114,11 +115,12 @@ export function ProductGrid() {
         </div>
 
         {totalPages > 1 && (
-          <div className="mt-8 flex justify-center gap-4">
+          <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
             <Button
               variant="outline"
               onClick={() => changePage(Math.max(1, state.currentPage - 1))}
               disabled={state.currentPage === 1}
+              className="w-full sm:w-auto"
             >
               Previous
             </Button>
@@ -129,6 +131,7 @@ export function ProductGrid() {
               variant="outline"
               onClick={() => changePage(Math.min(totalPages, state.currentPage + 1))}
               disabled={state.currentPage === totalPages}
+              className="w-full sm:w-auto"
             >
               Next
             </Button>

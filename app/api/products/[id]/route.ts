@@ -6,12 +6,22 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const product = await prisma.product.findUnique({
-      where: { id: params.id }
+    const { searchParams } = new URL(request.url)
+    const isAdmin = searchParams.get('isAdmin') === 'true'
+
+    const product = await prisma.product.findFirst({
+      where: {
+        id: params.id,
+        // Only show product if display is 'Yes' or if it's an admin request
+        ...(isAdmin ? {} : { display: 'Yes' })
+      }
     })
 
     if (!product) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Product not found' },
+        { status: 404 }
+      )
     }
 
     // Get variants (products with same styleCode)

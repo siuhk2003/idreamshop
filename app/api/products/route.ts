@@ -5,10 +5,16 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category') || 'all'
+    const type = searchParams.get('type') || 'all'
+    const isAdmin = searchParams.get('isAdmin') === 'true'
 
-    let whereClause = {}
-    if (category !== 'all') {
-      whereClause = { category }
+    let whereClause: any = {
+      // Only show products with display = 'Yes' unless it's an admin request
+      ...(isAdmin ? {} : { display: 'Yes' }),
+      // Add category filter if specified
+      ...(category !== 'all' ? { category } : {}),
+      // Add type filter if specified
+      ...(type !== 'all' ? { producttype: type } : {})
     }
 
     // Get all products
@@ -36,7 +42,10 @@ export async function GET(request: Request) {
         additionalImages: true,
         createdAt: true,
         updatedAt: true,
-        exchangeRate: true
+        exchangeRate: true,
+        wholesaleCo: true,
+        producttype: true,
+        display: true
       }
     })
 
