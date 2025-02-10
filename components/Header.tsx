@@ -5,10 +5,10 @@ import Image from 'next/image'
 import { Cart } from '@/components/Cart'
 import { MemberMenu } from '@/components/MemberMenu'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useMember } from '@/hooks/useMember'
 import { Button } from './ui/button'
-import { useCart } from '@/contexts/CartContext'
+import { Menu, X } from 'lucide-react'
 
 type HeaderProps = {
   variant?: 'default' | 'home'
@@ -17,11 +17,7 @@ type HeaderProps = {
 export function Header({ variant = 'default' }: HeaderProps) {
   const router = useRouter()
   const { name: memberName, fetchProfile, setName } = useMember()
-  const { items } = useCart()
-
-  useEffect(() => {
-    fetchProfile()
-  }, []) // Run once on mount
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   const handleLogout = async () => {
     try {
@@ -49,14 +45,28 @@ export function Header({ variant = 'default' }: HeaderProps) {
             <Image
               src="/logo1.jpg"
               alt="iDream Logo"
-              width={160}
-              height={160}
+              width={120}
+              height={120}
               className="mr-2"
               priority
             />
           </Link>
 
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center gap-4 sm:hidden">
+            <Cart />
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              {isMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+          </div>
+
+          <div className="hidden sm:flex items-center space-x-6">
             <nav>
               <ul className="flex space-x-8">
                 <li>
@@ -127,6 +137,63 @@ export function Header({ variant = 'default' }: HeaderProps) {
             </div>
           </div>
         </div>
+
+        {isMenuOpen && (
+          <div className="sm:hidden">
+            <nav className="pt-4 pb-3 border-t border-gray-200 mt-4">
+              <ul className="space-y-3">
+                <li>
+                  <Link 
+                    href="/products?category=new"
+                    className="block px-2 py-1 text-base font-medium text-gray-700 hover:text-gray-900"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    New Arrivals
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    href="/products"
+                    className="block px-2 py-1 text-base font-medium text-gray-700 hover:text-gray-900"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    All Products
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    href="/products?category=clearance"
+                    className="block px-2 py-1 text-base font-medium text-gray-700 hover:text-gray-900"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Clearance
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    href="/about"
+                    className="block px-2 py-1 text-base font-medium text-gray-700 hover:text-gray-900"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    About
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    href="/contact"
+                    className="block px-2 py-1 text-base font-medium text-gray-700 hover:text-gray-900"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Contact
+                  </Link>
+                </li>
+              </ul>
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <MemberMenu memberName={memberName} onLogout={handleLogout} />
+              </div>
+            </nav>
+          </div>
+        )}
       </div>
     </header>
   )
