@@ -1,13 +1,13 @@
 'use client'
 
+import { useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Cart } from '@/components/Cart'
 import { MemberMenu } from '@/components/MemberMenu'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { useMember } from '@/hooks/useMember'
-import { Button } from './ui/button'
+import { useMember } from '@/app/contexts/MemberContext'
 import { Menu, X } from 'lucide-react'
 
 type HeaderProps = {
@@ -16,24 +16,8 @@ type HeaderProps = {
 
 export function Header({ variant = 'default' }: HeaderProps) {
   const router = useRouter()
-  const { name: memberName, fetchProfile, setName } = useMember()
+  const { member, logout } = useMember()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-
-  const handleLogout = async () => {
-    try {
-      const response = await fetch('/api/member/logout', {
-        method: 'POST',
-        credentials: 'include'
-      })
-
-      if (response.ok) {
-        setName(null)
-        router.push('/login')
-      }
-    } catch (error) {
-      console.error('Logout failed:', error)
-    }
-  }
 
   return (
     <header className={`${
@@ -131,8 +115,11 @@ export function Header({ variant = 'default' }: HeaderProps) {
                 </li>
               </ul>
             </nav>
-            <div className="flex items-center space-x-4 pl-4 border-l border-gray-200">
-              <MemberMenu memberName={memberName} onLogout={handleLogout} />
+            <div className="flex items-center space-x-4">
+              <MemberMenu 
+                memberName={member?.firstName || null} 
+                onLogout={logout}
+              />
               <Cart />
             </div>
           </div>
@@ -189,7 +176,10 @@ export function Header({ variant = 'default' }: HeaderProps) {
                 </li>
               </ul>
               <div className="mt-4 pt-4 border-t border-gray-200">
-                <MemberMenu memberName={memberName} onLogout={handleLogout} />
+                <MemberMenu 
+                  memberName={member?.firstName || null} 
+                  onLogout={logout}
+                />
               </div>
             </nav>
           </div>

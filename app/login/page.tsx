@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Suspense } from 'react'
+import { useMember } from '@/app/contexts/MemberContext'
 
 function LoginContent() {
   const [email, setEmail] = useState('')
@@ -18,8 +19,9 @@ function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/'
+  const { login } = useMember()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
     setError('')
@@ -36,6 +38,7 @@ function LoginContent() {
       const data = await response.json()
 
       if (response.ok) {
+        login(data)
         router.push(callbackUrl)
       } else {
         setError(data.error || 'Login failed')

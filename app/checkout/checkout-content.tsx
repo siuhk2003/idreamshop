@@ -346,326 +346,324 @@ export function CheckoutContent() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-grow bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Left Column - Form */}
-            <div className="space-y-6">
-              {/* Shipping Information Section */}
-              <div className="bg-white p-6 rounded-lg shadow">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-semibold">Shipping Information</h2>
-                  {isMemberLoggedIn && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleLoadMemberInfo}
-                      disabled={isLoadingMemberInfo}
-                    >
-                      {isLoadingMemberInfo ? (
-                        <span>Loading...</span>
-                      ) : (
-                        <span>Load My Shipping Info</span>
-                      )}
-                    </Button>
+      <main className="flex-grow container mx-auto px-4 py-8">
+        <div className="grid md:grid-cols-3 gap-6">
+          {/* Left Column - Contact & Shipping */}
+          <div className="md:col-span-2 space-y-6">
+            {/* Shipping Information Section */}
+            <div className="bg-white p-6 rounded-lg shadow">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold">Shipping Information</h2>
+                {isMemberLoggedIn && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleLoadMemberInfo}
+                    disabled={isLoadingMemberInfo}
+                  >
+                    {isLoadingMemberInfo ? (
+                      <span>Loading...</span>
+                    ) : (
+                      <span>Load My Shipping Info</span>
+                    )}
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input
+                      id="firstName"
+                      name="firstName"
+                      value={shippingInfo.firstName}
+                      onChange={handleInputChange}
+                      className={errors.firstName ? 'border-red-500' : ''}
+                    />
+                    {errors.firstName && (
+                      <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      name="lastName"
+                      value={shippingInfo.lastName}
+                      onChange={handleInputChange}
+                      className={errors.lastName ? 'border-red-500' : ''}
+                    />
+                    {errors.lastName && (
+                      <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={shippingInfo.email}
+                    onChange={handleInputChange}
+                    className={errors.email ? 'border-red-500' : ''}
+                  />
+                  {errors.email && (
+                    <p className="text-red-500 text-sm mt-1">{errors.email}</p>
                   )}
                 </div>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input
-                        id="firstName"
-                        name="firstName"
-                        value={shippingInfo.firstName}
-                        onChange={handleInputChange}
-                        className={errors.firstName ? 'border-red-500' : ''}
-                      />
-                      {errors.firstName && (
-                        <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
-                      )}
-                    </div>
-                    <div>
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input
-                        id="lastName"
-                        name="lastName"
-                        value={shippingInfo.lastName}
-                        onChange={handleInputChange}
-                        className={errors.lastName ? 'border-red-500' : ''}
-                      />
-                      {errors.lastName && (
-                        <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
-                      )}
-                    </div>
-                  </div>
 
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={shippingInfo.email}
-                      onChange={handleInputChange}
-                      className={errors.email ? 'border-red-500' : ''}
-                    />
-                    {errors.email && (
-                      <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      value={shippingInfo.phone}
-                      onChange={handleInputChange}
-                      className={errors.phone ? 'border-red-500' : ''}
-                    />
-                    {errors.phone && (
-                      <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="address">Address</Label>
-                    <Input
-                      id="address"
-                      name="address"
-                      value={shippingInfo.address}
-                      onChange={handleInputChange}
-                      className={errors.address ? 'border-red-500' : ''}
-                    />
-                    {errors.address && (
-                      <p className="text-red-500 text-sm mt-1">{errors.address}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="apartment">Apartment/Suite (Optional)</Label>
-                    <Input
-                      id="apartment"
-                      name="apartment"
-                      value={shippingInfo.apartment}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="city">City</Label>
-                      <Input
-                        id="city"
-                        name="city"
-                        value={shippingInfo.city}
-                        onChange={handleInputChange}
-                        className={errors.city ? 'border-red-500' : ''}
-                      />
-                      {errors.city && (
-                        <p className="text-red-500 text-sm mt-1">{errors.city}</p>
-                      )}
-                    </div>
-                    <div>
-                      <Label htmlFor="province">Province</Label>
-                      <select
-                        id="province"
-                        name="province"
-                        value={shippingInfo.province}
-                        onChange={handleInputChange}
-                        className={`w-full rounded-md border ${
-                          errors.province ? 'border-red-500' : 'border-gray-300'
-                        } p-2`}
-                      >
-                        {PROVINCES.map((province) => (
-                          <option key={province} value={province}>
-                            {province}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.province && (
-                        <p className="text-red-500 text-sm mt-1">{errors.province}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="postalCode">Postal Code</Label>
-                    <Input
-                      id="postalCode"
-                      name="postalCode"
-                      value={shippingInfo.postalCode}
-                      onChange={handleInputChange}
-                      className={errors.postalCode ? 'border-red-500' : ''}
-                    />
-                    {errors.postalCode && (
-                      <p className="text-red-500 text-sm mt-1">{errors.postalCode}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment Method Section */}
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h2 className="text-2xl font-semibold mb-6">Payment Method</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <button
-                    type="button"
-                    onClick={() => handlePaymentMethodChange('stripe')}
-                    className={`p-4 border rounded-lg flex items-center gap-2 ${
-                      paymentMethod === 'stripe' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-                    }`}
-                  >
-                    <CreditCard className="w-5 h-5" />
-                    <div className="text-left">
-                      <div className="font-medium">Credit Card</div>
-                      <div className="text-sm text-gray-500">Pay with credit card</div>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handlePaymentMethodChange('etransfer')}
-                    className={`p-4 border rounded-lg flex items-center gap-2 ${
-                      paymentMethod === 'etransfer' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-                    }`}
-                  >
-                    <Banknote className="w-5 h-5" />
-                    <div className="text-left">
-                      <div className="font-medium">E-Transfer</div>
-                      <div className="text-sm text-gray-500">Pay via Interac e-Transfer</div>
-                    </div>
-                  </button>
+                <div>
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    value={shippingInfo.phone}
+                    onChange={handleInputChange}
+                    className={errors.phone ? 'border-red-500' : ''}
+                  />
+                  {errors.phone && (
+                    <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                  )}
                 </div>
 
-                {/* Show E-Transfer instructions and confirm button when selected */}
-                {showEtransferInstructions && (
-                  <div className="mt-4 space-y-4">
-                    <ETransferInstructions total={total} />
-                    <Button
-                      onClick={handleEtransferCheckout}
-                      disabled={isProcessing}
-                      className="w-full"
+                <div>
+                  <Label htmlFor="address">Address</Label>
+                  <Input
+                    id="address"
+                    name="address"
+                    value={shippingInfo.address}
+                    onChange={handleInputChange}
+                    className={errors.address ? 'border-red-500' : ''}
+                  />
+                  {errors.address && (
+                    <p className="text-red-500 text-sm mt-1">{errors.address}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="apartment">Apartment/Suite (Optional)</Label>
+                  <Input
+                    id="apartment"
+                    name="apartment"
+                    value={shippingInfo.apartment}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      name="city"
+                      value={shippingInfo.city}
+                      onChange={handleInputChange}
+                      className={errors.city ? 'border-red-500' : ''}
+                    />
+                    {errors.city && (
+                      <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="province">Province</Label>
+                    <select
+                      id="province"
+                      name="province"
+                      value={shippingInfo.province}
+                      onChange={handleInputChange}
+                      className={`w-full rounded-md border ${
+                        errors.province ? 'border-red-500' : 'border-gray-300'
+                      } p-2`}
                     >
-                      {isProcessing ? 'Processing...' : 'Confirm E-Transfer Order'}
-                    </Button>
+                      {PROVINCES.map((province) => (
+                        <option key={province} value={province}>
+                          {province}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.province && (
+                      <p className="text-red-500 text-sm mt-1">{errors.province}</p>
+                    )}
                   </div>
-                )}
+                </div>
 
-                {/* Show Stripe Elements only for credit card payment */}
-                {paymentMethod === 'stripe' && (
-                  <div className="mt-6">
-                    <Elements stripe={getStripe()} options={{
-                      appearance: {
-                        theme: 'stripe',
-                        variables: {
-                          colorPrimary: '#0F172A',
-                        },
-                      },
-                      mode: 'payment',
-                      currency: 'cad',
-                      amount: Math.round(total * 100),
-                    }}>
-                      <PaymentForm
-                        shippingInfo={shippingInfo}
-                        amount={total}
-                        shippingCost={shippingCost}
-                        items={items}
-                        discountCode={discountCode}
-                        discountPercent={discountPercent}
-                      />
-                    </Elements>
-                  </div>
-                )}
+                <div>
+                  <Label htmlFor="postalCode">Postal Code</Label>
+                  <Input
+                    id="postalCode"
+                    name="postalCode"
+                    value={shippingInfo.postalCode}
+                    onChange={handleInputChange}
+                    className={errors.postalCode ? 'border-red-500' : ''}
+                  />
+                  {errors.postalCode && (
+                    <p className="text-red-500 text-sm mt-1">{errors.postalCode}</p>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Right Column - Order Summary */}
-            <div className="md:sticky md:top-4 h-fit">
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-lg font-medium mb-4">Order Summary</h3>
-                <div className="space-y-4">
-                  {/* Products List */}
-                  {items.map((item) => (
-                    <div key={item.id} className="flex items-center gap-4">
-                      <img 
-                        src={item.imageUrl} 
-                        alt={item.name} 
-                        className="w-16 h-16 object-cover rounded"
-                      />
-                      <div className="flex-grow">
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
-                      </div>
-                      <span>${(item.price * item.quantity).toFixed(2)}</span>
-                    </div>
-                  ))}
+            {/* Payment Method Section */}
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h2 className="text-2xl font-semibold mb-6">Payment Method</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => handlePaymentMethodChange('stripe')}
+                  className={`p-4 border rounded-lg flex items-center gap-2 ${
+                    paymentMethod === 'stripe' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                  }`}
+                >
+                  <CreditCard className="w-5 h-5" />
+                  <div className="text-left">
+                    <div className="font-medium">Credit Card</div>
+                    <div className="text-sm text-gray-500">Pay with credit card</div>
+                  </div>
+                </button>
 
-                  {/* Subtotal */}
-                  <div className="border-t pt-4 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Subtotal</span>
-                      <span>${subtotal.toFixed(2)}</span>
-                    </div>
+                <button
+                  type="button"
+                  onClick={() => handlePaymentMethodChange('etransfer')}
+                  className={`p-4 border rounded-lg flex items-center gap-2 ${
+                    paymentMethod === 'etransfer' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                  }`}
+                >
+                  <Banknote className="w-5 h-5" />
+                  <div className="text-left">
+                    <div className="font-medium">E-Transfer</div>
+                    <div className="text-sm text-gray-500">Pay via Interac e-Transfer</div>
+                  </div>
+                </button>
+              </div>
 
-                    {/* Discount Code Input */}
-                    <div className="flex gap-2 mt-2">
-                      <Input
-                        type="text"
-                        placeholder="Discount Code"
-                        value={discountCode}
-                        onChange={(e) => setDiscountCode(e.target.value)}
-                        className="flex-grow"
-                      />
-                      <Button 
-                        onClick={handleApplyDiscount}
-                        variant="outline"
-                        size="sm"
-                      >
-                        Apply
-                      </Button>
-                    </div>
-                    {discountError && (
-                      <p className="text-red-500 text-sm">{discountError}</p>
-                    )}
+              {/* Show E-Transfer instructions and confirm button when selected */}
+              {showEtransferInstructions && (
+                <div className="mt-4 space-y-4">
+                  <ETransferInstructions total={total} />
+                  <Button
+                    onClick={handleEtransferCheckout}
+                    disabled={isProcessing}
+                    className="w-full"
+                  >
+                    {isProcessing ? 'Processing...' : 'Confirm E-Transfer Order'}
+                  </Button>
+                </div>
+              )}
 
-                    {/* Discount Amount */}
-                    {discountPercent && discountPercent > 0 && (
-                      <div className="flex justify-between text-sm text-green-600">
-                        <span>Discount ({discountPercent}%)</span>
-                        <span>-${discountAmount.toFixed(2)}</span>
-                      </div>
-                    )}
+              {/* Show Stripe Elements only for credit card payment */}
+              {paymentMethod === 'stripe' && (
+                <div className="mt-6">
+                  <Elements stripe={getStripe()} options={{
+                    appearance: {
+                      theme: 'stripe',
+                      variables: {
+                        colorPrimary: '#0F172A',
+                      },
+                    },
+                    mode: 'payment',
+                    currency: 'cad',
+                    amount: Math.round(total * 100),
+                  }}>
+                    <PaymentForm
+                      shippingInfo={shippingInfo}
+                      amount={total}
+                      shippingCost={shippingCost}
+                      items={items}
+                      discountCode={discountCode}
+                      discountPercent={discountPercent}
+                    />
+                  </Elements>
+                </div>
+              )}
+            </div>
+          </div>
 
-                    {/* Shipping */}
-                    <div className="flex justify-between text-sm">
-                      <span>Shipping & Handling</span>
-                      <span>${shippingCost.toFixed(2)}</span>
+          {/* Right Column - Order Summary */}
+          <div className="md:sticky md:top-4 h-fit">
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h3 className="text-lg font-medium mb-4">Order Summary</h3>
+              <div className="space-y-4">
+                {/* Products List */}
+                {items.map((item) => (
+                  <div key={item.id} className="flex items-center gap-4">
+                    <img 
+                      src={item.imageUrl} 
+                      alt={item.name} 
+                      className="w-16 h-16 object-cover rounded"
+                    />
+                    <div className="flex-grow">
+                      <p className="font-medium">{item.name}</p>
+                      <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                     </div>
+                    <span>${(item.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                ))}
 
-                    {/* Total before tax */}
-                    <div className="flex justify-between text-sm font-medium">
-                      <span>Total before tax</span>
-                      <span>${totalBeforeTax.toFixed(2)}</span>
-                    </div>
+                {/* Subtotal */}
+                <div className="border-t pt-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal</span>
+                    <span>${subtotal.toFixed(2)}</span>
+                  </div>
 
-                    {/* Taxes */}
-                    <div className="flex justify-between text-sm">
-                      <span>GST (5%)</span>
-                      <span>${gst.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>PST (7%)</span>
-                      <span>${pst.toFixed(2)}</span>
-                    </div>
+                  {/* Discount Code Input */}
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      type="text"
+                      placeholder="Discount Code"
+                      value={discountCode}
+                      onChange={(e) => setDiscountCode(e.target.value)}
+                      className="flex-grow"
+                    />
+                    <Button 
+                      onClick={handleApplyDiscount}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                  {discountError && (
+                    <p className="text-red-500 text-sm">{discountError}</p>
+                  )}
 
-                    {/* Grand Total */}
-                    <div className="flex justify-between font-bold text-lg border-t pt-2">
-                      <span>Total</span>
-                      <span>${total.toFixed(2)}</span>
+                  {/* Discount Amount */}
+                  {discountPercent && discountPercent > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Discount ({discountPercent}%)</span>
+                      <span>-${discountAmount.toFixed(2)}</span>
                     </div>
+                  )}
+
+                  {/* Shipping */}
+                  <div className="flex justify-between text-sm">
+                    <span>Shipping & Handling</span>
+                    <span>${shippingCost.toFixed(2)}</span>
+                  </div>
+
+                  {/* Total before tax */}
+                  <div className="flex justify-between text-sm font-medium">
+                    <span>Total before tax</span>
+                    <span>${totalBeforeTax.toFixed(2)}</span>
+                  </div>
+
+                  {/* Taxes */}
+                  <div className="flex justify-between text-sm">
+                    <span>GST (5%)</span>
+                    <span>${gst.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>PST (7%)</span>
+                    <span>${pst.toFixed(2)}</span>
+                  </div>
+
+                  {/* Grand Total */}
+                  <div className="flex justify-between font-bold text-lg border-t pt-2">
+                    <span>Total</span>
+                    <span>${total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -674,94 +672,6 @@ export function CheckoutContent() {
         </div>
       </main>
       <Footer />
-      <Button
-        type="button"
-        onClick={() => {
-          const cart = localStorage.getItem('cart')
-          const checkout = localStorage.getItem('checkout_data')
-          console.log('Current cart:', cart ? JSON.parse(cart) : null)
-          console.log('Current checkout:', checkout ? JSON.parse(checkout) : null)
-        }}
-      >
-        Check Local Storage
-      </Button>
-      <div className="mt-8 space-y-4">
-        <h2 className="text-lg font-semibold">Payment Method</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button
-            type="button"
-            onClick={() => handlePaymentMethodChange('stripe')}
-            className={`p-4 border rounded-lg flex items-center gap-2 ${
-              paymentMethod === 'stripe' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-            }`}
-          >
-            <CreditCard className="w-5 h-5" />
-            <div className="text-left">
-              <div className="font-medium">Credit Card</div>
-              <div className="text-sm text-gray-500">Pay with credit card</div>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handlePaymentMethodChange('etransfer')}
-            className={`p-4 border rounded-lg flex items-center gap-2 ${
-              paymentMethod === 'etransfer' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-            }`}
-          >
-            <Banknote className="w-5 h-5" />
-            <div className="text-left">
-              <div className="font-medium">E-Transfer</div>
-              <div className="text-sm text-gray-500">Pay via Interac e-Transfer</div>
-            </div>
-          </button>
-        </div>
-
-        {/* Show E-Transfer instructions and confirm button when selected */}
-        {showEtransferInstructions && (
-          <div className="mt-4 space-y-4">
-            <ETransferInstructions total={total} />
-            <Button
-              onClick={handleEtransferCheckout}
-              disabled={isProcessing}
-              className="w-full"
-            >
-              {isProcessing ? 'Processing...' : 'Confirm E-Transfer Order'}
-            </Button>
-          </div>
-        )}
-
-        {/* Show Stripe Elements only for credit card payment */}
-        {paymentMethod === 'stripe' && (
-          <div className="mt-6">
-            <Elements stripe={getStripe()} options={{
-              appearance: {
-                theme: 'stripe',
-                variables: {
-                  colorPrimary: '#0F172A',
-                },
-              },
-              mode: 'payment',
-              currency: 'cad',
-              amount: Math.round(total * 100),
-            }}>
-              <PaymentForm
-                shippingInfo={shippingInfo}
-                amount={total}
-                shippingCost={shippingCost}
-                items={items}
-                discountCode={discountCode}
-                discountPercent={discountPercent}
-              />
-            </Elements>
-          </div>
-        )}
-
-        {error && (
-          <div className="text-red-500 mt-2">{error}</div>
-        )}
-      </div>
     </div>
   )
 } 

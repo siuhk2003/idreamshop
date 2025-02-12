@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { validateForm } from '@/lib/validation'
+import { useMember } from '@/app/contexts/MemberContext'
 
 interface Profile {
   email: string
@@ -21,6 +22,7 @@ interface Profile {
 
 export default function ProfilePage() {
   const router = useRouter()
+  const { member, login } = useMember()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -30,34 +32,42 @@ export default function ProfilePage() {
   const [passwordError, setPasswordError] = useState('')
   const [passwordSuccess, setPasswordSuccess] = useState(false)
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await fetch('/api/member/profile', {
-          credentials: 'include'
-        })
+  const fetchProfile = useCallback(async () => {
+    try {
+      const response = await fetch('/api/member/profile', {
+        credentials: 'include'
+      })
 
-        if (response.status === 401) {
-          router.push('/login?redirect=/profile')
-          return
-        }
-
-        const data = await response.json()
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to load profile')
-        }
-
-        setProfile(data.member)
-      } catch (err) {
-        setError('Failed to load profile')
-        console.error('Profile fetch error:', err)
-      } finally {
-        setLoading(false)
+      if (response.status === 401) {
+        router.push('/login?redirect=/profile')
+        return
       }
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load profile')
+      }
+
+      setProfile(data)
+      login(data)
+    } catch (err) {
+      setError('Failed to load profile')
+      console.error('Profile fetch error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [router, login])
+
+  useEffect(() => {
+    if (!member) {
+      router.push('/login?redirect=/profile')
+      return
     }
 
-    fetchProfile()
-  }, [router])
+    if (!profile) {
+      fetchProfile()
+    }
+  }, [member, profile, router, fetchProfile])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -79,6 +89,7 @@ export default function ProfilePage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
+        credentials: 'include'
       })
 
       if (!response.ok) {
@@ -86,8 +97,10 @@ export default function ProfilePage() {
       }
 
       const updatedProfile = await response.json()
-      setProfile(updatedProfile.member)
+      setProfile(updatedProfile)
+      login(updatedProfile)
       setEditing(false)
+      setError('')
     } catch (err) {
       setError('Failed to update profile')
     } finally {
@@ -151,15 +164,23 @@ export default function ProfilePage() {
     }
   }
 
-  if (loading) return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-grow">
-        <div className="text-center py-8">Loading profile...</div>
-      </main>
-      <Footer />
-    </div>
-  )
+  // Handle initial loading state
+  if (typeof window === 'undefined') {
+    return null // Return null during server-side rendering
+  }
+
+  // Handle loading and no member states
+  if (loading || !member) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-lg">Loading profile...</div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -177,149 +198,158 @@ export default function ProfilePage() {
           )}
 
           {profile && (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-8">
+                {/* Personal Information Section */}
                 <div>
-                  <label className="block mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={profile.email}
-                    disabled
-                    className="w-full border p-2 rounded bg-gray-50"
-                  />
+                  <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2">
+                      <label className="block mb-1">Email</label>
+                      <input
+                        type="email"
+                        value={profile.email}
+                        disabled
+                        className="w-full border p-2 rounded bg-gray-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1">First Name</label>
+                      <input
+                        type="text"
+                        name="firstName"
+                        defaultValue={profile.firstName}
+                        disabled={!editing}
+                        required
+                        className="w-full border p-2 rounded"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1">Last Name</label>
+                      <input
+                        type="text"
+                        name="lastName"
+                        defaultValue={profile.lastName}
+                        disabled={!editing}
+                        required
+                        className="w-full border p-2 rounded"
+                      />
+                    </div>
+                  </div>
                 </div>
 
+                {/* Shipping Information Section */}
                 <div>
-                  <label className="block mb-1">First Name</label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    defaultValue={profile.firstName}
-                    disabled={!editing}
-                    required
-                    className="w-full border p-2 rounded"
-                  />
+                  <h2 className="text-xl font-semibold mb-4">Shipping Information</h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2">
+                      <label className="block mb-1">Street Address</label>
+                      <input
+                        type="text"
+                        name="address"
+                        defaultValue={profile.address}
+                        disabled={!editing}
+                        required
+                        className="w-full border p-2 rounded"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1">Apartment/Suite (optional)</label>
+                      <input
+                        type="text"
+                        name="apartment"
+                        defaultValue={profile.apartment}
+                        disabled={!editing}
+                        className="w-full border p-2 rounded"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1">City</label>
+                      <input
+                        type="text"
+                        name="city"
+                        defaultValue={profile.city}
+                        disabled={!editing}
+                        required
+                        className="w-full border p-2 rounded"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1">Province</label>
+                      <select
+                        name="province"
+                        defaultValue={profile.province}
+                        disabled={!editing}
+                        required
+                        className="w-full border p-2 rounded"
+                      >
+                        <option value="">Select Province</option>
+                        <option value="AB">Alberta</option>
+                        <option value="BC">British Columbia</option>
+                        <option value="MB">Manitoba</option>
+                        <option value="NB">New Brunswick</option>
+                        <option value="NL">Newfoundland and Labrador</option>
+                        <option value="NS">Nova Scotia</option>
+                        <option value="ON">Ontario</option>
+                        <option value="PE">Prince Edward Island</option>
+                        <option value="QC">Quebec</option>
+                        <option value="SK">Saskatchewan</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block mb-1">Postal Code</label>
+                      <input
+                        type="text"
+                        name="postalCode"
+                        defaultValue={profile.postalCode}
+                        disabled={!editing}
+                        required
+                        className="w-full border p-2 rounded"
+                        placeholder="A1A 1A1"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1">Phone</label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        defaultValue={profile.phone}
+                        disabled={!editing}
+                        required
+                        className="w-full border p-2 rounded"
+                        placeholder="(123) 456-7890"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block mb-1">Last Name</label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    defaultValue={profile.lastName}
-                    disabled={!editing}
-                    required
-                    className="w-full border p-2 rounded"
-                  />
-                </div>
-
-                <div>
-                  <label className="block mb-1">Address</label>
-                  <input
-                    type="text"
-                    name="address"
-                    defaultValue={profile.address}
-                    disabled={!editing}
-                    required
-                    className="w-full border p-2 rounded"
-                  />
-                </div>
-
-                <div>
-                  <label className="block mb-1">Apartment (optional)</label>
-                  <input
-                    type="text"
-                    name="apartment"
-                    defaultValue={profile.apartment}
-                    disabled={!editing}
-                    className="w-full border p-2 rounded"
-                  />
-                </div>
-
-                <div>
-                  <label className="block mb-1">City</label>
-                  <input
-                    type="text"
-                    name="city"
-                    defaultValue={profile.city}
-                    disabled={!editing}
-                    required
-                    className="w-full border p-2 rounded"
-                  />
-                </div>
-
-                <div>
-                  <label className="block mb-1">Province</label>
-                  <select
-                    name="province"
-                    defaultValue={profile.province}
-                    disabled={!editing}
-                    required
-                    className="w-full border p-2 rounded"
-                  >
-                    <option value="">Select Province</option>
-                    <option value="Alberta">Alberta</option>
-                    <option value="British Columbia">British Columbia</option>
-                    <option value="Manitoba">Manitoba</option>
-                    <option value="New Brunswick">New Brunswick</option>
-                    <option value="Newfoundland and Labrador">Newfoundland and Labrador</option>
-                    <option value="Nova Scotia">Nova Scotia</option>
-                    <option value="Ontario">Ontario</option>
-                    <option value="Prince Edward Island">Prince Edward Island</option>
-                    <option value="Quebec">Quebec</option>
-                    <option value="Saskatchewan">Saskatchewan</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block mb-1">Postal Code</label>
-                  <input
-                    type="text"
-                    name="postalCode"
-                    defaultValue={profile.postalCode}
-                    disabled={!editing}
-                    required
-                    className="w-full border p-2 rounded"
-                  />
-                </div>
-
-                <div>
-                  <label className="block mb-1">Phone</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    defaultValue={profile.phone}
-                    disabled={!editing}
-                    required
-                    className="w-full border p-2 rounded"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-4">
-                {editing ? (
-                  <>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setEditing(false)}
-                      disabled={saving}
-                    >
-                      Cancel
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-4">
+                  {editing ? (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setEditing(false)}
+                        disabled={saving}
+                      >
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={saving}>
+                        {saving ? 'Saving...' : 'Save Changes'}
+                      </Button>
+                    </>
+                  ) : (
+                    <Button type="button" onClick={() => setEditing(true)}>
+                      Edit Information
                     </Button>
-                    <Button type="submit" disabled={saving}>
-                      {saving ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                  </>
-                ) : (
-                  <Button type="button" onClick={() => setEditing(true)}>
-                    Edit Profile
-                  </Button>
-                )}
+                  )}
+                </div>
               </div>
             </form>
           )}
 
+          {/* Password Change Section */}
           <div className="mt-8 pt-8 border-t">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold">Password</h2>

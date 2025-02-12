@@ -12,17 +12,21 @@ interface MemberMenuProps {
 
 export function MemberMenu({ memberName, onLogout }: MemberMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
+  // Handle client-side mounting
   useEffect(() => {
-    // Add a small delay to prevent flash of wrong content
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 100)
-    return () => clearTimeout(timer)
+    setMounted(true)
   }, [])
 
-  if (isLoading) return null
+  // Don't render anything on server-side
+  if (!mounted) {
+    return (
+      <div className="w-[120px] flex items-center justify-center">
+        <User className="h-5 w-5" />
+      </div>
+    )
+  }
 
   return (
     <div className="relative">
@@ -32,15 +36,16 @@ export function MemberMenu({ memberName, onLogout }: MemberMenuProps) {
           className="flex items-center space-x-2"
           onClick={() => setIsOpen(!isOpen)}
         >
-          <span className="text-gray-700">Welcome, {memberName}</span>
+          <User className="h-5 w-5" />
+          <span>{memberName}</span>
         </Button>
       ) : (
-        <Link href="/login">
-          <Button variant="ghost" className="flex items-center space-x-2">
+        <Button variant="ghost" asChild>
+          <Link href="/login" className="flex items-center space-x-2">
             <User className="h-5 w-5" />
             <span>Login</span>
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       )}
 
       {isOpen && memberName && (
@@ -48,17 +53,22 @@ export function MemberMenu({ memberName, onLogout }: MemberMenuProps) {
           <Link 
             href="/profile" 
             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            onClick={() => setIsOpen(false)}
           >
             Profile
           </Link>
           <Link 
             href="/orders" 
             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            onClick={() => setIsOpen(false)}
           >
             Orders
           </Link>
           <button
-            onClick={onLogout}
+            onClick={() => {
+              setIsOpen(false)
+              onLogout()
+            }}
             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
             Logout
