@@ -1,139 +1,145 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import Stripe from 'stripe'
+import { stripe } from '@/lib/stripe'
 import { CartItem } from '@/types/cart'
 import { sendEmail } from '@/lib/email'
 import { getOrderConfirmationEmail } from '@/lib/emailTemplates'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia'
-})
-
 export async function POST(request: Request) {
   try {
-    const { items, shippingInfo, paymentIntentId, totals } = await request.json()
-    console.log('=== Starting Checkout Process ===')
-    console.log('Received items:', JSON.stringify(items, null, 2))
-    console.log('Payment Intent ID:', paymentIntentId)
-
-    // Verify payment intent with Stripe
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
-    console.log('Payment Intent Status:', paymentIntent.status)
+    console.log('=== Starting Checkout API ===')
     
+    const body = await request.json()
+    console.log('Received order data:', body)
+
+    const { paymentIntentId, items, shippingInfo, totals } = body
+
+    // Recalculate totals to ensure accuracy
+    const subtotal = items.reduce((sum: number, item: CartItem) => 
+      sum + (Number(item.price) * Number(item.quantity)), 0)
+    const discount = Number(totals.discount || 0)
+    const shippingCost = Number(totals.shippingCost)
+    const totalBeforeTax = Number((subtotal - discount + shippingCost).toFixed(2))
+    const gst = Number((totalBeforeTax * 0.05).toFixed(2))
+    const pst = Number((totalBeforeTax * 0.07).toFixed(2))
+    const total = Number((totalBeforeTax + gst + pst).toFixed(2))
+
+    console.log('Verified totals:', {
+      subtotal: subtotal.toFixed(2),
+      discount: discount.toFixed(2),
+      shippingCost: shippingCost.toFixed(2),
+      totalBeforeTax: totalBeforeTax.toFixed(2),
+      gst: gst.toFixed(2),
+      pst: pst.toFixed(2),
+      total: total.toFixed(2)
+    })
+
+    // Verify payment first
+    console.log('Verifying payment:', paymentIntentId)
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
+    console.log('Payment status:', paymentIntent.status)
+
     if (paymentIntent.status !== 'succeeded') {
-      console.log('Payment not successful, status:', paymentIntent.status)
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Payment not successful'
-        }),
-        {
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      )
+      return NextResponse.json({
+        success: false,
+        error: 'Payment not successful'
+      }, { status: 400 })
     }
 
-    console.log('=== Starting Stock Update Transaction ===')
-    // Start a transaction
-    const result = await prisma.$transaction(async (tx) => {
-      const updatedProducts = []
+    // Check for existing order
+    const existingOrder = await prisma.order.findFirst({
+      where: { paymentIntentId }
+    })
+
+    if (existingOrder) {
+      console.log('Found existing order:', existingOrder.orderNumber)
+      return NextResponse.json({
+        success: true,
+        order: {
+          orderNumber: existingOrder.orderNumber,
+          total: existingOrder.total
+        }
+      })
+    }
+
+    console.log('Creating new order...')
+
+    // Process new order in transaction
+    const order = await prisma.$transaction(async (tx) => {
+      console.log('=== Processing Stock Updates ===')
       
-      // First check and update stock
+      // Update stock first
       for (const item of items) {
-        console.log(`Processing item: ${item.id}, Quantity: ${item.quantity}`)
-        
-        // 1. First check if product exists and get current stock
         const product = await tx.product.findUnique({
           where: { id: item.id },
-          select: {
-            id: true,
-            name: true,
-            stock: true
-          }
+          select: { id: true, name: true, stock: true }
         })
 
         if (!product) {
-          throw new Error(`Product ${item.id} not found`)
+          throw new Error(`Product not found: ${item.id}`)
         }
 
-        // 2. Check if enough stock is available
-        console.log(`Found product: ${product.name}`)
-        console.log(`Current stock: ${product.stock}`)
-        console.log(`Requested quantity: ${item.quantity}`)
+        console.log('Current stock:', {
+          productId: item.id,
+          stock: product.stock,
+          requested: item.quantity
+        })
 
         if (product.stock < item.quantity) {
           throw new Error(`Insufficient stock for ${product.name}`)
         }
 
-        // 3. Update the stock by decrementing it
         const updatedProduct = await tx.product.update({
           where: { id: item.id },
-          data: {
-            stock: {
-              decrement: item.quantity  // This reduces the stock by the ordered quantity
-            }
-          },
-          select: {
-            id: true,
-            name: true,
-            stock: true
-          }
+          data: { stock: { decrement: item.quantity } }
         })
 
-        console.log(`Stock updated for ${updatedProduct.name}:`)
-        console.log(`Previous stock: ${product.stock}`)
-        console.log(`New stock: ${updatedProduct.stock}`)
-        
-        updatedProducts.push(updatedProduct)
+        console.log('Stock updated:', {
+          productId: item.id,
+          oldStock: product.stock,
+          newStock: updatedProduct.stock,
+          deducted: item.quantity
+        })
       }
 
-      console.log('=== Creating Order ===')
-      console.log('Order data:', {
-        orderNumber: `ORD-${Date.now()}`,
-        status: 'PROCESSING',
-        totals: {
-          subtotal: totals.subtotal,
-          shipping: totals.shipping,
-          gst: totals.gst,
-          pst: totals.pst,
-          total: totals.total
-        },
-        items: items.map((item: CartItem) => ({
-          productId: item.id,
-          quantity: item.quantity,
-          price: item.price
-        })),
-        shippingInfo
-      })
-
-      console.log('Shipping cost from totals:', totals.shipping)
-
-      const order = await tx.order.create({
+      // Create order with all details
+      const newOrder = await tx.order.create({
         data: {
           orderNumber: `ORD-${Date.now()}`,
           status: 'PROCESSING',
-          subtotal: totals.subtotal,
-          gst: totals.gst,
-          pst: totals.pst,
-          total: totals.total,
-          paymentIntentId,
           paymentMethod: 'stripe',
-          shippingCost: Number(totals.shipping) || 0,
+          paymentIntentId,
+          
+          // Use recalculated totals
+          subtotal,
+          discount,
+          shippingCost,
+          totalBeforeTax,
+          gst,
+          pst,
+          total,
+
+          // Relations
+          shippingInfo: {
+            create: {
+              firstName: shippingInfo.firstName,
+              lastName: shippingInfo.lastName,
+              email: shippingInfo.email,
+              phone: shippingInfo.phone,
+              address: shippingInfo.address,
+              apartment: shippingInfo.apartment || '',
+              city: shippingInfo.city,
+              province: shippingInfo.province,
+              postalCode: shippingInfo.postalCode,
+              country: 'CA'
+            }
+          },
           items: {
             create: items.map((item: CartItem) => ({
               productId: item.id,
               quantity: item.quantity,
-              price: item.price
+              price: Number(item.price)
             }))
-          },
-          shippingInfo: {
-            create: {
-              ...shippingInfo,
-              country: shippingInfo.country || 'Canada' // Ensure country is set
-            }
           },
           statusHistory: {
             create: {
@@ -143,82 +149,47 @@ export async function POST(request: Request) {
           }
         },
         include: {
+          shippingInfo: true,
           items: {
             include: {
-              product: {
-                select: {
-                  name: true
-                }
-              }
+              product: { select: { name: true } }
             }
-          },
-          shippingInfo: true,
-          statusHistory: true
+          }
         }
       })
 
-      console.log('Created order with relations:', JSON.stringify(order, null, 2))
-
-      // After creating the order, send confirmation email
-      try {
-        if (order.shippingInfo) {
-          const emailData = {
-            orderNumber: order.orderNumber,
-            items: order.items.map(item => ({
-              quantity: item.quantity,
-              price: item.price,
-              product: { name: item.product.name }
-            })),
-            shippingInfo: {
-              ...order.shippingInfo,
-              apartment: order.shippingInfo.apartment || undefined
-            },
-            subtotal: order.subtotal,
-            shipping: Number(order.shippingCost),
-            gst: order.gst,
-            pst: order.pst,
-            total: order.total,
-            paymentMethod: order.paymentMethod
-          }
-          await sendEmail({
-            to: order.shippingInfo.email,
-            subject: `Order Confirmation #${order.orderNumber}`,
-            html: getOrderConfirmationEmail(emailData)
-          })
-        }
-      } catch (emailError) {
-        console.error('Failed to send confirmation email:', emailError)
-      }
-
-      return { order, updatedProducts }
+      console.log('Created order:', newOrder)
+      return newOrder
     })
 
-    console.log('=== Transaction Completed Successfully ===')
-    console.log('Order ID:', result.order.id)
+    // Send confirmation email
+    try {
+      await sendEmail({
+        to: shippingInfo.email,
+        subject: `Order Confirmation #${order.orderNumber}`,
+        html: getOrderConfirmationEmail(order)
+      })
+      console.log('Confirmation email sent')
+    } catch (emailError) {
+      console.error('Failed to send confirmation email:', emailError)
+    }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        orderId: result.order.id,
-        updatedProducts: result.updatedProducts
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json'
-        }
+    return NextResponse.json({
+      success: true,
+      order: {
+        orderNumber: order.orderNumber,
+        total: order.total
       }
-    )
+    })
 
   } catch (error) {
-    console.error('=== Checkout Error ===')
-    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error')
-
-    return NextResponse.json({ 
+    // Fix error handling
+    const errorMessage = error instanceof Error ? error.message : 'Checkout failed'
+    console.error('Checkout failed:', errorMessage)
+    
+    return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Checkout failed'
-    }, { 
-      status: 500 
-    })
+      error: errorMessage
+    }, { status: 500 })
   }
 } 

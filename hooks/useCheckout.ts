@@ -20,62 +20,89 @@ export function useCheckout(paymentIntentId: string | null) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
   const processAttempted = useRef(false)
-  const router = useRouter()
 
   const processCheckout = useCallback(async () => {
-    if (!paymentIntentId || !items.length) {
-      router.push('/')
+    if (!paymentIntentId) {
+      console.warn('No payment intent ID provided')
       return
     }
 
-    if (processAttempted.current || isComplete || isProcessing) {
+    if (!items.length) {
+      console.warn('No items in cart')
       return
     }
+
+    if (processAttempted.current) {
+      console.warn('Checkout already attempted')
+      return
+    }
+
+    console.log('Starting checkout process:', {
+      paymentIntentId,
+      itemCount: items.length
+    })
 
     setIsProcessing(true)
     processAttempted.current = true
 
     try {
-      console.log('Starting checkout process...')
+      // Get checkout data
       const checkoutDataString = localStorage.getItem('checkout_data')
-      
       if (!checkoutDataString) {
-        throw new Error('Checkout data not found')
+        throw new Error('No checkout data found')
       }
 
       const checkoutData = JSON.parse(checkoutDataString)
-      console.log('Retrieved checkout data:', checkoutData)
+      console.log('Retrieved checkout data')
 
+      // Check for existing order
+      const checkResponse = await fetch(`/api/checkout/check/${paymentIntentId}`)
+      if (!checkResponse.ok) {
+        throw new Error('Failed to check order status')
+      }
+
+      const checkData = await checkResponse.json()
+      console.log('Order check result:', checkData)
+
+      if (checkData.exists) {
+        console.log('Order already exists')
+        clearCart()
+        localStorage.removeItem('checkout_data')
+        setIsComplete(true)
+        return
+      }
+
+      // Create order
+      console.log('Creating new order')
       const response = await fetch('/api/checkout', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           paymentIntentId,
           items,
           shippingInfo: checkoutData.shippingInfo,
           totals: checkoutData.totals
-        }),
+        })
       })
 
-      const data = await response.json()
-      console.log('Checkout response:', data)
-
       if (!response.ok) {
-        throw new Error(data.error || 'Checkout failed')
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to create order')
       }
 
+      console.log('Order created successfully')
       clearCart()
       localStorage.removeItem('checkout_data')
       setIsComplete(true)
-    } catch (error) {
-      console.error('Checkout error:', error)
-      setError(error instanceof Error ? error.message : 'Error processing checkout')
+
+    } catch (err) {
+      console.error('Checkout error:', err)
+      setError(err instanceof Error ? err.message : 'Checkout failed')
+      throw err
     } finally {
       setIsProcessing(false)
     }
-  }, [paymentIntentId, items, clearCart, router, isComplete, isProcessing])
+  }, [paymentIntentId, items, clearCart])
 
   return {
     error,

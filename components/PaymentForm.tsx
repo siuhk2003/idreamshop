@@ -1,9 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js'
 import { Button } from './ui/button'
 import { useRouter } from 'next/navigation'
+import { CartItem } from '@/types/cart'
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
+import { checkStock } from '@/lib/checkStock'
 
 interface ShippingInfo {
   firstName: string
@@ -17,61 +21,134 @@ interface ShippingInfo {
   phone: string
 }
 
-interface PaymentFormProps {
-  amount: number
-  onSuccess: (paymentIntentId: string) => Promise<boolean>
-  shippingInfo: ShippingInfo
+interface OutOfStockItem {
+  name: string
+  availableStock: number
 }
 
-export function PaymentForm({ amount, onSuccess, shippingInfo }: PaymentFormProps) {
+interface StockCheckItem extends OutOfStockItem {
+  color?: string
+}
+
+interface PaymentFormProps {
+  shippingInfo: ShippingInfo
+  amount: number
+  shippingCost: number
+  items: CartItem[]
+  clientSecret?: string
+  discountCode: string
+  discountPercent: number | null
+}
+
+export function PaymentForm({ shippingInfo, amount, shippingCost, items, discountCode, discountPercent }: PaymentFormProps) {
   const stripe = useStripe()
   const elements = useElements()
-  const [error, setError] = useState<string | null>(null)
-  const [processing, setProcessing] = useState(false)
-  const [message, setMessage] = useState<string>("")
   const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Add appearance options for Stripe
+  const appearance = {
+    theme: 'stripe',
+    variables: {
+      colorPrimary: '#0F172A',
+    },
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setProcessing(true)
+
+    if (!stripe || !elements) {
+      return
+    }
+
+    setIsLoading(true)
     setError(null)
 
     try {
-      // Validate shipping info first
-      const validationResult = await onSuccess('validation-check')
-      if (!validationResult) {
-        setProcessing(false)
-        return // Stop here if validation fails
-      }
-
-      if (!stripe || !elements) {
-        throw new Error('Stripe not initialized')
-      }
-
-      // Only validate payment element after shipping info is valid
+      // 1. Submit the form first - this is required by Stripe
       const { error: submitError } = await elements.submit()
       if (submitError) {
-        setError(submitError.message || "Please check your payment details")
-        return
+        throw submitError
       }
 
-      // Create payment intent only after all validations pass
-      const response = await fetch('/api/create-payment-intent', {
+      // 2. Check stock first
+      const stockResponse = await fetch('/api/check-stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount })
+        body: JSON.stringify({ items })
       })
+      
+      const stockData = await stockResponse.json()
+      if (!stockData.success) {
+        throw new Error('Some items are out of stock')
+      }
 
-      const { clientSecret } = await response.json()
+      // 3. Create payment intent
+      const intentResponse = await fetch('/api/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
+          shippingInfo,
+          discountCode,
+          discountPercent
+        })
+      })
+      
+      const { clientSecret } = await intentResponse.json()
+      if (!clientSecret) {
+        throw new Error('Failed to create payment intent')
+      }
 
-      // Process payment
-      const result = await stripe.confirmPayment({
+      // 4. Save checkout data before confirming payment
+      const checkoutData = {
+        shippingInfo,
+        items: items.map(item => ({
+          id: item.id,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        totals: {
+          subtotal: amount - shippingCost,
+          shippingCost,
+          totalBeforeTax: amount - shippingCost + shippingCost,
+          discount: discountPercent ? ((amount - shippingCost) * discountPercent / 100) : 0,
+          total: amount
+        }
+      }
+      
+      console.log('Saving checkout data:', checkoutData)
+      localStorage.setItem('checkout_data', JSON.stringify(checkoutData))
+      localStorage.setItem('checkout_data_backup', JSON.stringify(checkoutData))
+
+      // 5. Confirm payment - this redirects to success page
+      const { error: paymentError } = await stripe.confirmPayment({
         elements,
         clientSecret,
         confirmParams: {
-          return_url: `${window.location.origin}/checkout/success`,
-          payment_method_data: {
-            billing_details: {
+          return_url: `${window.location.origin}/checkout/success`
+        }
+      })
+
+      if (paymentError) {
+        throw paymentError
+      }
+    } catch (error: any) {
+      console.error('Payment error:', error)
+      setError(error.message || 'Payment failed')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <PaymentElement 
+        options={{ 
+          layout: "tabs",
+          defaultValues: {
+            billingDetails: {
               name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
               email: shippingInfo.email,
               phone: shippingInfo.phone,
@@ -83,67 +160,26 @@ export function PaymentForm({ amount, onSuccess, shippingInfo }: PaymentFormProp
                 postal_code: shippingInfo.postalCode,
                 country: 'CA',
               },
-            },
-          },
-        },
-      })
-
-      if (result.error) {
-        throw result.error
-      }
-
-    } catch (error) {
-      console.error('Payment error:', error)
-      setError(error instanceof Error ? error.message : 'Payment failed')
-    } finally {
-      setProcessing(false)
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="p-4 border rounded-md">
-        <PaymentElement
-          options={{
-            layout: "tabs",
-            defaultValues: {
-              billingDetails: {
-                name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
-                email: shippingInfo.email,
-                phone: shippingInfo.phone,
-                address: {
-                  line1: shippingInfo.address,
-                  line2: shippingInfo.apartment || '',
-                  city: shippingInfo.city,
-                  state: shippingInfo.province,
-                  postal_code: shippingInfo.postalCode,
-                  country: 'CA',
-                }
-              }
             }
-          }}
-        />
-      </div>
+          }
+        }} 
+      />
 
       {error && (
-        <div className="text-red-500 text-sm">
-          {error}
-        </div>
-      )}
-
-      {message && (
-        <div className="text-green-500 text-sm">
-          {message}
+        <div className="bg-red-50 p-4 rounded-md">
+          <p className="text-red-800">{error}</p>
         </div>
       )}
 
       <Button
         type="submit"
-        disabled={!stripe || processing}
+        disabled={!stripe || isLoading}
         className="w-full"
       >
-        {processing ? 'Processing...' : `Pay $${amount.toFixed(2)}`}
+        {isLoading ? 'Processing...' : `Pay $${amount.toFixed(2)}`}
       </Button>
     </form>
   )
-} 
+}
+
+export type { PaymentFormProps }; 

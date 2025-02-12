@@ -1,94 +1,82 @@
-export function getOrderConfirmationEmail(order: {
-  orderNumber: string
-  items: Array<{
-    quantity: number
-    price: number
-    product: {
-      name: string
-    }
-  }>
-  shippingInfo: {
-    firstName: string
-    lastName: string
-    email: string
-    address: string
-    apartment?: string
-    city: string
-    province: string
-    postalCode: string
-    phone: string
-  }
-  subtotal: number
-  gst: number
-  pst: number
-  total: number
-  paymentMethod?: string
-  shipping: number
-}) {
-  const isETransfer = order.paymentMethod === 'etransfer'
+export const getOrderConfirmationEmail = (order: any) => `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <h1 style="color: #333;">Order Confirmation</h1>
+    
+    <p>Dear ${order.shippingInfo.firstName} ${order.shippingInfo.lastName},</p>
+    
+    <p>Thank you for your order! Here are your order details:</p>
+    
+    <p style="font-weight: bold;">Order #${order.orderNumber}</p>
+    
+    <h3>Items Ordered:</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+      <tr style="border-bottom: 1px solid #eee;">
+        <th style="text-align: left; padding: 8px;">Item</th>
+        <th style="text-align: center; padding: 8px;">Quantity</th>
+        <th style="text-align: right; padding: 8px;">Price</th>
+      </tr>
+      ${order.items.map((item: any) => `
+        <tr style="border-bottom: 1px solid #eee;">
+          <td style="padding: 8px;">${item.product.name}</td>
+          <td style="text-align: center; padding: 8px;">${item.quantity}</td>
+          <td style="text-align: right; padding: 8px;">$${(item.price * item.quantity).toFixed(2)}</td>
+        </tr>
+      `).join('')}
+    </table>
 
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h1 style="color: #333; text-align: center;">Order Confirmation</h1>
-      <p>Dear ${order.shippingInfo.firstName} ${order.shippingInfo.lastName},</p>
-      <p>Thank you for your order! Here are your order details:</p>
+    <div style="margin-bottom: 20px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <span>Subtotal:</span>
+        <span>$${order.subtotal.toFixed(2)}</span>
+      </div>
       
-      <div style="margin: 20px 0; padding: 20px; background-color: #f9f9f9;">
-        <h2 style="color: #333;">Order #${order.orderNumber}</h2>
-        
-        ${isETransfer ? `
-          <div style="margin: 20px 0; padding: 15px; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 4px;">
-            <p style="color: #856404; margin: 0;">
-              <strong>Please complete your e-transfer payment to: cs@idreamshop.ca</strong><br>
-              Your order will be processed once we receive your payment. This usually takes 1-2 business days.
-            </p>
-          </div>
-        ` : ''}
-
-        <h3 style="color: #666;">Items Ordered:</h3>
-        <table style="width: 100%; border-collapse: collapse;">
-          <tr style="border-bottom: 1px solid #ddd;">
-            <th style="text-align: left; padding: 8px;">Item</th>
-            <th style="text-align: right; padding: 8px;">Quantity</th>
-            <th style="text-align: right; padding: 8px;">Price</th>
-          </tr>
-          ${order.items.map(item => `
-            <tr style="border-bottom: 1px solid #ddd;">
-              <td style="padding: 8px;">${item.product.name}</td>
-              <td style="text-align: right; padding: 8px;">${item.quantity}</td>
-              <td style="text-align: right; padding: 8px;">$${(item.price * item.quantity).toFixed(2)}</td>
-            </tr>
-          `).join('')}
-        </table>
-        
-        <div style="margin-top: 20px; text-align: right;">
-          <p>Subtotal: $${order.subtotal.toFixed(2)}</p>
-          <p>Shipping: $${order.shipping.toFixed(2)}</p>
-          <p>GST (5%): $${order.gst.toFixed(2)}</p>
-          <p>PST (7%): $${order.pst.toFixed(2)}</p>
-          <p style="font-weight: bold; font-size: 1.2em;">Total: $${order.total.toFixed(2)}</p>
+      ${order.discount > 0 ? `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: #16a34a;">
+          <span>Discount:</span>
+          <span>-$${order.discount.toFixed(2)}</span>
         </div>
-      </div>
-      
-      <div style="margin: 20px 0; padding: 20px; background-color: #f9f9f9;">
-        <h3 style="color: #666;">Shipping Address:</h3>
-        <p>
-          ${order.shippingInfo.firstName} ${order.shippingInfo.lastName}<br>
-          ${order.shippingInfo.address}
-          ${order.shippingInfo.apartment ? `<br>${order.shippingInfo.apartment}` : ''}<br>
-          ${order.shippingInfo.city}, ${order.shippingInfo.province}<br>
-          ${order.shippingInfo.postalCode}<br>
-          Phone: ${order.shippingInfo.phone}
-        </p>
-      </div>
-      
-      ${!isETransfer ? `
-        <p>We'll notify you when your order has been shipped.</p>
       ` : ''}
       
-      <div style="margin-top: 40px; text-align: center; color: #666;">
-        <p>Thank you for shopping with us!</p>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <span>Shipping:</span>
+        <span>$${order.shippingCost.toFixed(2)}</span>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px; border-top: 1px solid #eee; padding-top: 5px;">
+        <span>Total Before Tax:</span>
+        <span>$${order.totalBeforeTax.toFixed(2)}</span>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <span>GST (5%):</span>
+        <span>$${order.gst.toFixed(2)}</span>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <span>PST (7%):</span>
+        <span>$${order.pst.toFixed(2)}</span>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid #eee; padding-top: 5px;">
+        <span>Total:</span>
+        <span>$${order.total.toFixed(2)}</span>
       </div>
     </div>
-  `
-} 
+
+    <div style="margin-bottom: 20px;">
+      <h3>Shipping Address:</h3>
+      <p style="margin: 0;">
+        ${order.shippingInfo.firstName} ${order.shippingInfo.lastName}<br>
+        ${order.shippingInfo.address}
+        ${order.shippingInfo.apartment ? `<br>Unit ${order.shippingInfo.apartment}` : ''}<br>
+        ${order.shippingInfo.city}, ${order.shippingInfo.province}<br>
+        ${order.shippingInfo.postalCode}<br>
+        Phone: ${order.shippingInfo.phone}
+      </p>
+    </div>
+
+    <p>We'll notify you when your order has been shipped.</p>
+    
+    <p>Thank you for shopping with us!</p>
+  </div>
+` 

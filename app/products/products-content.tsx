@@ -1,38 +1,34 @@
 'use client'
 
-import { ProductCard } from '@/components/ProductCard'
+import { Suspense } from 'react'
+import dynamic from 'next/dynamic'
+import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
+import { ProductGrid } from './product-grid'
 
-interface Product {
-  id: string
-  name: string
-  price: number
-  originalPrice?: number | null
-  imageUrl: string
-  category: string
-  stock: number
-}
+const FilterSidebar = dynamic(
+  () => import('./filter-sidebar').then(mod => mod.FilterSidebar),
+  { ssr: false }
+)
 
-interface ProductsContentProps {
-  products: Product[]
-}
-
-export function ProductsContent({ products }: ProductsContentProps) {
+export function ProductsContent() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            id={product.id}
-            name={product.name}
-            price={product.price}
-            originalPrice={product.originalPrice}
-            imageUrl={product.imageUrl}
-            isClearance={product.category === 'clearance'}
-            stock={product.stock}
-          />
-        ))}
-      </div>
+    <div className="flex flex-col min-h-screen bg-gray-200">
+      <Header />
+      <main className="flex-grow container mx-auto px-4 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          <Suspense fallback={<div className="w-full lg:w-64">Loading filters...</div>}>
+            <FilterSidebar />
+          </Suspense>
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold mb-8">Our Products</h1>
+            <Suspense fallback={<div>Loading products...</div>}>
+              <ProductGrid />
+            </Suspense>
+          </div>
+        </div>
+      </main>
+      <Footer />
     </div>
   )
 } 

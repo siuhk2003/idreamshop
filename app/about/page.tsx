@@ -2,6 +2,7 @@ import Image from 'next/image'
 import { Card, CardContent } from "@/components/ui/card"
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { Metadata } from "next"
 
 export default function AboutPage() {
   return (
@@ -111,5 +112,11 @@ export default function AboutPage() {
       <Footer />
     </div>
   )
+}
+
+export const metadata: Metadata = {
+  title: "About Us",
+  description: "Learn about iDream Shop and our commitment to quality fashion accessories",
+  keywords: ["about us", "iDream Shop", "fashion accessories", "company history"]
 }
 

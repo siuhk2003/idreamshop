@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from '@/contexts/CartContext'
+import { ThemeProvider } from "next-themes"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,22 +15,34 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "iDream Shop",
-  description: "iDream Shop",
+  title: {
+    default: "iDream Shop",
+    template: "%s | iDream Shop"
+  },
+  description: "Trendy Earrings, Necklaces, and more at iDream Shop",
+  keywords: ["earrings", "necklaces", "hair clips", "bracelets", "iDream Shop", "online store"],
+  openGraph: {
+    title: "iDream Shop",
+    description: "Premium fashion accessories in Canada at iDream Shop",
+    url: "https://idreamshop.ca",
+    siteName: "iDream Shop",
+    locale: "en_US",
+    type: "website",
+  }
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
         <CartProvider>
-          {children}
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+            {children}
+          </ThemeProvider>
         </CartProvider>
       </body>
     </html>

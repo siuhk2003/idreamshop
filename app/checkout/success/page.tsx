@@ -5,110 +5,122 @@ import { useSearchParams } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { Button } from '@/components/ui/button'
-import Link from 'next/link'
 import { CheckCircle } from 'lucide-react'
+import Link from 'next/link'
 import { useCart } from '@/contexts/CartContext'
-import { Suspense } from 'react'
-import { useRouter } from 'next/navigation'
 
 function CheckoutSuccessContent() {
-  const { clearCart } = useCart()
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
-  const [error, setError] = useState<string | null>(null)
   const searchParams = useSearchParams()
-  const router = useRouter()
-
+  const { clearCart } = useCart()
+  const [error, setError] = useState<string | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const processAttempted = useRef(false)
+  
   useEffect(() => {
-    const processCheckout = async () => {
+    const processOrder = async () => {
+      const paymentIntentId = searchParams.get('payment_intent')
+      const redirectStatus = searchParams.get('redirect_status')
+
+      console.log('Checking order status:', { 
+        paymentIntentId, 
+        redirectStatus,
+        attempted: processAttempted.current 
+      })
+
+      if (!paymentIntentId || processAttempted.current || redirectStatus !== 'succeeded') {
+        console.log('Skipping order processing:', { 
+          noPaymentIntent: !paymentIntentId,
+          alreadyAttempted: processAttempted.current,
+          wrongStatus: redirectStatus !== 'succeeded'
+        })
+        return
+      }
+
       try {
-        const paymentIntentId = searchParams.get('payment_intent')
-        if (!paymentIntentId) {
-          throw new Error('No payment intent ID found')
+        processAttempted.current = true
+        setIsProcessing(true)
+        console.log('Starting order processing...')
+
+        const checkoutDataStr = localStorage.getItem('checkout_data')
+        if (!checkoutDataStr) {
+          throw new Error('No checkout data found')
         }
 
-        // Get checkout data from localStorage
-        const checkoutDataString = localStorage.getItem('checkout_data')
-        const cartDataString = localStorage.getItem('cart')
-        
-        if (!checkoutDataString || !cartDataString) {
-          throw new Error('Missing checkout or cart data')
-        }
-
-        const checkoutData = JSON.parse(checkoutDataString)
-        const cartItems = JSON.parse(cartDataString)
+        const checkoutData = JSON.parse(checkoutDataStr)
+        console.log('Found checkout data:', checkoutData)
 
         const response = await fetch('/api/checkout', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             paymentIntentId,
-            items: cartItems,
-            shippingInfo: checkoutData.shippingInfo,
-            totals: checkoutData.totals
+            ...checkoutData
           })
         })
 
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || 'Checkout failed')
+        const data = await response.json()
+        console.log('Checkout API response:', data)
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Failed to process order')
         }
 
-        const data = await response.json()
-        if (data.success) {
-          setStatus('success')
-          clearCart()
-          localStorage.removeItem('checkout_data')
-        } else {
-          throw new Error(data.error || 'Checkout failed')
-        }
+        console.log('Order processed successfully, clearing data...')
+        clearCart()
+        localStorage.removeItem('checkout_data')
 
       } catch (error) {
-        console.error('Checkout error:', error)
-        setStatus('error')
-        setError(error instanceof Error ? error.message : 'Checkout failed')
+        console.error('Order processing failed:', error)
+        setError(error instanceof Error ? error.message : 'Failed to process order')
+        processAttempted.current = false // Allow retry on error
+      } finally {
+        setIsProcessing(false)
       }
     }
 
-    processCheckout()
+    processOrder()
   }, [searchParams, clearCart])
+
+  if (isProcessing) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Processing Your Order...</h1>
+            <p className="text-gray-600">Please wait while we complete your purchase.</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-red-500">Error: {error}</div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow flex items-center justify-center">
         <div className="text-center">
-          {error ? (
-            <>
-              <h1 className="text-3xl font-bold mb-4 text-red-600">Checkout Error</h1>
-              <p className="text-gray-600 mb-8">{error}</p>
-              <Link href="/checkout">
-                <Button>Try Again</Button>
-              </Link>
-            </>
-          ) : status === 'loading' ? (
-            <>
-              <h1 className="text-3xl font-bold mb-4">Processing Order...</h1>
-              <p className="text-gray-600 mb-8">Please wait while we complete your order.</p>
-            </>
-          ) : status === 'success' ? (
-            <>
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h1 className="text-3xl font-bold mb-4">Order Successful!</h1>
-              <p className="text-gray-600 mb-8">
-                Thank you for your purchase. We'll send you an email with your order details.
-              </p>
-              <Link href="/products">
-                <Button>Continue Shopping</Button>
-              </Link>
-            </>
-          ) : (
-            <div>
-              <h1 className="text-3xl font-bold mb-4">Initializing Checkout...</h1>
-              <p className="text-gray-600 mb-8">Please wait...</p>
-            </div>
-          )}
+          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <h1 className="text-3xl font-bold mb-4">Order Successful!</h1>
+          <p className="text-gray-600 mb-8">
+            Thank you for your purchase. We'll send you an email with your order details.
+          </p>
+          <Link href="/products">
+            <Button>Continue Shopping</Button>
+          </Link>
         </div>
       </main>
       <Footer />
@@ -117,17 +129,5 @@ function CheckoutSuccessContent() {
 }
 
 export default function CheckoutSuccessPage() {
-  return (
-    <Suspense fallback={
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-grow flex items-center justify-center">
-          <div>Processing your order...</div>
-        </main>
-        <Footer />
-      </div>
-    }>
-      <CheckoutSuccessContent />
-    </Suspense>
-  )
+  return <CheckoutSuccessContent />
 } 

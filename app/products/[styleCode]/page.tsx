@@ -5,21 +5,62 @@ import { Product } from '@/types/product'
 import { Suspense } from 'react'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import type { Metadata } from "next"
 
 interface PageProps {
-  params: Promise<{ styleCode: string }> | { styleCode: string }
-  searchParams: Promise<{ sku?: string }> | { sku?: string }
+  params: Promise<{ styleCode: string }>
+  searchParams: Promise<{ sku?: string }>
 }
 
-export default async function ProductPage({ params, searchParams }: PageProps) {
-  const resolvedParams = await params
-  const resolvedSearchParams = await searchParams
-  
-  const { styleCode } = resolvedParams
-  const { sku } = resolvedSearchParams || {}
+// Generate metadata dynamically for product pages
+export async function generateMetadata(
+  { params }: { params: Promise<{ styleCode: string }> }
+): Promise<Metadata> {
+  // Await the params
+  const { styleCode } = await params
 
-  if (!styleCode) {
-    console.log('No styleCode provided')
+  // Validate styleCode
+  if (!styleCode || styleCode.includes('.')) {
+    return {
+      title: 'Product Not Found',
+      description: 'The requested product could not be found'
+    }
+  }
+
+  const product = await prisma.product.findFirst({
+    where: { styleCode }
+  })
+
+  if (!product) {
+    return {
+      title: 'Product Not Found',
+      description: 'The requested product could not be found'
+    }
+  }
+
+  return {
+    title: product.name,
+    description: product.description || `View details for ${product.name}`,
+    keywords: [
+      product.name,
+      product.category,
+      product.producttype || '',
+      "fashion accessories",
+      "earrings",
+      "necklaces",
+      "bracelets",
+      "hair clips"
+    ].filter((keyword): keyword is string => typeof keyword === 'string' && keyword !== '')
+  }
+}
+
+export default async function ProductPage(props: PageProps) {
+  // Await both params and searchParams
+  const { styleCode } = await props.params
+  const { sku } = await props.searchParams
+
+  // Validate styleCode
+  if (!styleCode || styleCode.includes('.')) {
     notFound()
   }
 
@@ -57,7 +98,6 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
     }) as Product[]
 
     if (!products.length) {
-      console.log('No products found for styleCode:', styleCode)
       notFound()
     }
 
@@ -72,9 +112,6 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
 
     // Get variants excluding the main product
     const variants = products.filter(p => p.id !== mainProduct.id)
-
-    console.log('Main product:', mainProduct)
-    console.log('Variants:', variants)
 
     return (
       <Suspense fallback={
@@ -101,17 +138,6 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
     )
   } catch (error) {
     console.error('Error in ProductPage:', error)
-    return (
-      <>
-        <Header />
-        <main className="container mx-auto px-4 py-8">
-          <div className="text-center py-8">
-            <h1 className="text-2xl font-bold mb-4">Error Loading Product</h1>
-            <p className="text-gray-600">Sorry, there was a problem loading this product.</p>
-          </div>
-        </main>
-        <Footer />
-      </>
-    )
+    notFound()
   }
 } 

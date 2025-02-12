@@ -74,7 +74,7 @@ export function ProductDetails({ product, variants = [] }: ProductDetailsProps) 
         <div className="relative aspect-square w-full">
           <Image
             src={getCloudinaryUrl(allImages[currentImageIndex])}
-            alt={currentProduct.name}
+            alt={`${currentProduct.name} - ${currentProduct.color}`}
             fill
             className="object-cover rounded-lg"
             priority
@@ -93,7 +93,7 @@ export function ProductDetails({ product, variants = [] }: ProductDetailsProps) 
               >
                 <Image
                   src={getCloudinaryUrl(image)}
-                  alt={`Product view ${index + 1}`}
+                  alt={`${currentProduct.name} - View ${index + 1}`}
                   fill
                   className="object-cover"
                 />

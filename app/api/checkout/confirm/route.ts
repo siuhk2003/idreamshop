@@ -1,10 +1,5 @@
 import { NextResponse } from 'next/server'
-import { redirect } from 'next/navigation'
-import Stripe from 'stripe'
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia'
-})
+import { stripe } from '@/lib/stripe'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -18,8 +13,10 @@ export async function GET(request: Request) {
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
     
     if (paymentIntent.status === 'succeeded') {
-      // Redirect to success page with payment intent ID
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?payment_intent=${paymentIntentId}`)
+      // Always redirect with new=true to ensure processing
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?payment_intent=${paymentIntentId}&new=true&redirect_status=succeeded`
+      )
     } else {
       return NextResponse.redirect('/checkout/error')
     }

@@ -1,36 +1,14 @@
-'use client'
+import { ProductsContent } from './products-content'
+import type { Metadata } from "next"
 
-import { Suspense } from 'react'
-import dynamic from 'next/dynamic'
-import { Header } from '@/components/Header'
-import { Footer } from '@/components/Footer'
-import { ProductGrid } from './product-grid'
-
-const FilterSidebar = dynamic(
-  () => import('./filter-sidebar').then(mod => mod.FilterSidebar),
-  { ssr: false }
-)
+export const metadata: Metadata = {
+  title: "Our Products",
+  description: "Browse our collection of premium fashion accessories. Find earrings, necklaces, bracelets, and more.",
+  keywords: ["fashion accessories", "earrings", "necklaces", "bracelets", "online shopping"]
+}
 
 export default function ProductsPage() {
-  return (
-    <div className="flex flex-col min-h-screen bg-gray-200">
-      <Header />
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          <Suspense fallback={<div className="w-full lg:w-64">Loading filters...</div>}>
-            <FilterSidebar />
-          </Suspense>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-8">Our Products</h1>
-            <Suspense fallback={<div>Loading products...</div>}>
-              <ProductGrid />
-            </Suspense>
-          </div>
-        </div>
-      </main>
-      <Footer />
-    </div>
-  )
+  return <ProductsContent />
 }
 
 

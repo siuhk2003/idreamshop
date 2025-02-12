@@ -58,7 +58,7 @@ export function ProductCard({
           <Image
             loader={cloudinaryLoader}
             src={imageUrl}
-            alt={name || 'Product image'}
+            alt={name}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

@@ -64,13 +64,19 @@ model Order {
   shippingInfo    ShippingInfo    @relation(fields: [shippingInfoId], references: [id])
   shippingInfoId  String
   paymentIntentId String?
-  subtotal        Float
-  gst             Float
-  pst             Float
-  total           Float
+  
+  // Updated price breakdown fields
+  subtotal        Float           // Original subtotal before any discounts
+  discount        Float           @default(0)  // Discount amount
+  discountCode    String?         // Store the used discount code
+  shippingCost    Float           @default(0)
+  totalBeforeTax  Float           // Subtotal - discount + shipping
+  gst             Float           // GST calculated on totalBeforeTax
+  pst             Float           // PST calculated on totalBeforeTax
+  total           Float           // Final total including all taxes
+  
   paymentMethod   String
   statusHistory   StatusHistory[]
-  shippingCost    Float    @default(0)
 }
 
 model ShippingInfo {
