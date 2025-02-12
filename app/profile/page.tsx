@@ -20,6 +20,32 @@ interface Profile {
   phone: string
 }
 
+const PROVINCE_MAP = {
+  'Alberta': 'AB',
+  'British Columbia': 'BC',
+  'Manitoba': 'MB',
+  'New Brunswick': 'NB',
+  'Newfoundland and Labrador': 'NL',
+  'Nova Scotia': 'NS',
+  'Ontario': 'ON',
+  'Prince Edward Island': 'PE',
+  'Quebec': 'QC',
+  'Saskatchewan': 'SK'
+} as const
+
+const PROVINCE_NAMES = {
+  'AB': 'Alberta',
+  'BC': 'British Columbia',
+  'MB': 'Manitoba',
+  'NB': 'New Brunswick',
+  'NL': 'Newfoundland and Labrador',
+  'NS': 'Nova Scotia',
+  'ON': 'Ontario',
+  'PE': 'Prince Edward Island',
+  'QC': 'Quebec',
+  'SK': 'Saskatchewan'
+} as const
+
 export default function ProfilePage() {
   const router = useRouter()
   const { member, login } = useMember()
@@ -33,6 +59,8 @@ export default function ProfilePage() {
   const [passwordSuccess, setPasswordSuccess] = useState(false)
 
   const fetchProfile = useCallback(async () => {
+    if (profile) return
+
     try {
       const response = await fetch('/api/member/profile', {
         credentials: 'include'
@@ -49,14 +77,13 @@ export default function ProfilePage() {
       }
 
       setProfile(data)
-      login(data)
+      setLoading(false)
     } catch (err) {
       setError('Failed to load profile')
       console.error('Profile fetch error:', err)
-    } finally {
       setLoading(false)
     }
-  }, [router, login])
+  }, [profile, router])
 
   useEffect(() => {
     if (!member) {
@@ -64,10 +91,8 @@ export default function ProfilePage() {
       return
     }
 
-    if (!profile) {
-      fetchProfile()
-    }
-  }, [member, profile, router, fetchProfile])
+    fetchProfile()
+  }, [member, router, fetchProfile])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -76,6 +101,12 @@ export default function ProfilePage() {
     try {
       const formData = new FormData(e.currentTarget)
       const data = Object.fromEntries(formData) as Record<string, string>
+      
+      // Convert province code to full name before sending
+      if (data.province) {
+        data.province = PROVINCE_NAMES[data.province as keyof typeof PROVINCE_NAMES]
+      }
+
       const errors = validateForm(data)
 
       if (Object.keys(errors).length > 0) {
@@ -164,18 +195,12 @@ export default function ProfilePage() {
     }
   }
 
-  // Handle initial loading state
-  if (typeof window === 'undefined') {
-    return null // Return null during server-side rendering
-  }
-
-  // Handle loading and no member states
-  if (loading || !member) {
+  if (loading) {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow flex items-center justify-center">
-          <div className="text-lg">Loading profile...</div>
+          <div>Loading profile...</div>
         </main>
         <Footer />
       </div>
@@ -278,7 +303,7 @@ export default function ProfilePage() {
                       <label className="block mb-1">Province</label>
                       <select
                         name="province"
-                        defaultValue={profile.province}
+                        defaultValue={profile.province ? PROVINCE_MAP[profile.province as keyof typeof PROVINCE_MAP] : ''}
                         disabled={!editing}
                         required
                         className="w-full border p-2 rounded"

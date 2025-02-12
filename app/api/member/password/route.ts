@@ -1,17 +1,15 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { headers } from 'next/headers'
 import bcrypt from 'bcryptjs'
+import { getSession } from '@/lib/session'
 
 export async function POST(request: Request) {
   try {
-    const headersList = await headers()
-    const cookie = headersList.get('cookie')
-    const memberId = cookie?.match(/member-token=([^;]+)/)?.[1]
-
-    if (!memberId) {
+    const session = await getSession()
+    
+    if (!session.member) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Not authenticated' },
         { status: 401 }
       )
     }
@@ -20,7 +18,11 @@ export async function POST(request: Request) {
 
     // Get member with password
     const member = await prisma.member.findUnique({
-      where: { id: memberId }
+      where: { id: session.member.id },
+      select: {
+        id: true,
+        password: true
+      }
     })
 
     if (!member) {
@@ -42,7 +44,7 @@ export async function POST(request: Request) {
     // Hash and update new password
     const hashedPassword = await bcrypt.hash(newPassword, 10)
     await prisma.member.update({
-      where: { id: memberId },
+      where: { id: session.member.id },
       data: { password: hashedPassword }
     })
 

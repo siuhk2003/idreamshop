@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useMemo, useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
@@ -12,6 +12,49 @@ const FilterSidebar = dynamic(
 )
 
 export function ProductsContent() {
+  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [selectedType, setSelectedType] = useState('all')
+  const [products, setProducts] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [types, setTypes] = useState<string[]>([])
+
+  useEffect(() => {
+    const fetchTypes = async () => {
+      if (types.length > 0) return
+      try {
+        const response = await fetch('/api/products/types')
+        if (response.ok) {
+          const data = await response.json()
+          setTypes(data.types)
+        }
+      } catch (error) {
+        console.error('Failed to fetch types:', error)
+      }
+    }
+
+    fetchTypes()
+  }, [types.length])
+
+  const fetchProducts = useMemo(() => {
+    return async () => {
+      const queryString = new URLSearchParams({
+        category: selectedCategory || 'all',
+        type: selectedType || 'all'
+      }).toString()
+
+      const response = await fetch(`/api/products?${queryString}`)
+      if (response.ok) {
+        const data = await response.json()
+        setProducts(data.products)
+      }
+      setIsLoading(false)
+    }
+  }, [selectedCategory, selectedType])
+
+  useEffect(() => {
+    fetchProducts()
+  }, [fetchProducts])
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-200">
       <Header />
