@@ -5,9 +5,11 @@ import { headers } from 'next/headers'
 export async function POST(request: Request) {
   try {
     const headersList = await headers()
-    const ip = headersList.get('x-visit-ip') || 'unknown'
-    const userAgent = headersList.get('x-visit-ua') || 'unknown'
-    const path = headersList.get('x-visit-path') || '/'
+    const forwarded = headersList.get('x-forwarded-for')
+    const realIp = headersList.get('x-real-ip')
+    const ip = forwarded?.split(',')[0] || realIp || 'unknown'
+    const userAgent = headersList.get('user-agent') || 'unknown'
+    const { path } = await request.json()
 
     // Don't record visits from bots/crawlers
     if (userAgent.toLowerCase().includes('bot') || 

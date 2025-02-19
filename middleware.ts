@@ -11,29 +11,9 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Skip recording for API routes and static files
-  if (
-    request.nextUrl.pathname.startsWith('/api') ||
-    request.nextUrl.pathname.startsWith('/_next') ||
-    request.nextUrl.pathname.includes('.')
-  ) {
-    return NextResponse.next()
-  }
-
-  // Create response and add visit tracking headers
-  const response = NextResponse.next()
-  
-  // Add visit tracking headers
-  response.headers.set('x-visit-path', request.nextUrl.pathname)
-  response.headers.set('x-visit-ip', request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown')
-  response.headers.set('x-visit-ua', request.headers.get('user-agent') || 'unknown')
-
-  return response
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: [
-    '/admin/:path*',
-    '/((?!api|_next/static|_next/image|favicon.ico).*)'
-  ]
+  matcher: ['/admin/:path*']
 } 
