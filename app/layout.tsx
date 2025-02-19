@@ -1,14 +1,10 @@
-'use client'
-
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from '@/contexts/CartContext'
 import { ThemeProvider } from "next-themes"
 import { MemberProvider } from '@/app/contexts/MemberContext'
-import { useEffect } from 'react'
-import { usePathname } from 'next/navigation'
-import { trackPageView } from '@/lib/analytics'
+import { Analytics } from '@/components/Analytics'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,18 +38,13 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const pathname = usePathname()
-
-  useEffect(() => {
-    trackPageView(pathname)
-  }, [pathname])
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
         <MemberProvider>
           <CartProvider>
             <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+              <Analytics />
               {children}
             </ThemeProvider>
           </CartProvider>
