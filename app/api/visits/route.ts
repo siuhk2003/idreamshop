@@ -4,12 +4,10 @@ import { headers } from 'next/headers'
 
 export async function POST(request: Request) {
   try {
-    const headersList = headers()
-    const forwarded = headersList.get('x-forwarded-for')
-    const realIp = headersList.get('x-real-ip')
-    const ip = forwarded?.split(',')[0] || realIp || 'unknown'
-    const userAgent = headersList.get('user-agent') || 'unknown'
-    const { path } = await request.json()
+    const headersList = await headers()
+    const ip = headersList.get('x-visit-ip') || 'unknown'
+    const userAgent = headersList.get('x-visit-ua') || 'unknown'
+    const path = headersList.get('x-visit-path') || '/'
 
     // Don't record visits from bots/crawlers
     if (userAgent.toLowerCase().includes('bot') || 
@@ -23,7 +21,7 @@ export async function POST(request: Request) {
         ip,
         path,
         timestamp: {
-          gte: new Date(Date.now() - 30 * 60 * 1000) // 30 minutes ago
+          gte: new Date(Date.now() - 30 * 60 * 1000)
         }
       }
     })
@@ -33,11 +31,7 @@ export async function POST(request: Request) {
     }
 
     await prisma.visit.create({
-      data: {
-        ip,
-        userAgent,
-        path,
-      }
+      data: { ip, userAgent, path }
     })
 
     return NextResponse.json({ success: true })
@@ -49,7 +43,7 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    const headersList = headers()
+    const headersList = await headers()
     const hasAdminToken = headersList.get('cookie')?.includes('admin-token')
 
     if (!hasAdminToken) {

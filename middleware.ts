@@ -6,11 +6,8 @@ export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/admin')) {
     const adminToken = request.cookies.get('admin-token')
 
-    // Exclude login page from check
-    if (!request.nextUrl.pathname.includes('/admin/login')) {
-      if (!adminToken) {
-        return NextResponse.redirect(new URL('/admin/login', request.url))
-      }
+    if (!request.nextUrl.pathname.includes('/admin/login') && !adminToken) {
+      return NextResponse.redirect(new URL('/admin/login', request.url))
     }
   }
 
@@ -23,35 +20,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Record the visit using the API route
-  try {
-    const response = await fetch(`${request.nextUrl.origin}/api/visits`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-forwarded-for': request.headers.get('x-forwarded-for') || '',
-        'x-real-ip': request.headers.get('x-real-ip') || '',
-        'user-agent': request.headers.get('user-agent') || ''
-      },
-      body: JSON.stringify({
-        path: request.nextUrl.pathname,
-      }),
-    })
-    
-    if (!response.ok) {
-      throw new Error(`Failed to record visit: ${await response.text()}`)
-    }
-  } catch (error) {
-    // Log error but don't block the request
-    console.error('Failed to record visit:', error)
-  }
+  // Create response and add visit tracking headers
+  const response = NextResponse.next()
+  
+  // Add visit tracking headers
+  response.headers.set('x-visit-path', request.nextUrl.pathname)
+  response.headers.set('x-visit-ip', request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown')
+  response.headers.set('x-visit-ua', request.headers.get('user-agent') || 'unknown')
 
-  return NextResponse.next()
+  return response
 }
 
 export const config = {
   matcher: [
-    '/admin/:path*',  // For admin routes
-    '/((?!api|_next/static|_next/image|favicon.ico).*)'  // For tracking visits
+    '/admin/:path*',
+    '/((?!api|_next/static|_next/image|favicon.ico).*)'
   ]
 } 
