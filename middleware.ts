@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
 
 export async function middleware(request: NextRequest) {
   // Check if it's an admin route
@@ -24,41 +23,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Record the visit directly
+  // Record the visit using the API route
   try {
-    const forwarded = request.headers.get('x-forwarded-for')
-    const realIp = request.headers.get('x-real-ip')
-    const ip = forwarded?.split(',')[0] || realIp || 'unknown'
-    const userAgent = request.headers.get('user-agent') || 'unknown'
-    const path = request.nextUrl.pathname
-
-    // Don't record visits from bots/crawlers
-    if (userAgent.toLowerCase().includes('bot') || 
-        userAgent.toLowerCase().includes('crawler')) {
-      return NextResponse.next()
-    }
-
-    // Don't record repeated visits from same IP to same path within 30 minutes
-    const recentVisit = await prisma.visit.findFirst({
-      where: {
-        ip,
-        path,
-        timestamp: {
-          gte: new Date(Date.now() - 30 * 60 * 1000)
-        }
-      }
+    const response = await fetch(`${request.nextUrl.origin}/api/visits`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-forwarded-for': request.headers.get('x-forwarded-for') || '',
+        'x-real-ip': request.headers.get('x-real-ip') || '',
+        'user-agent': request.headers.get('user-agent') || ''
+      },
+      body: JSON.stringify({
+        path: request.nextUrl.pathname,
+      }),
     })
-
-    if (!recentVisit) {
-      await prisma.visit.create({
-        data: {
-          ip,
-          userAgent,
-          path,
-        }
-      })
+    
+    if (!response.ok) {
+      throw new Error(`Failed to record visit: ${await response.text()}`)
     }
   } catch (error) {
+    // Log error but don't block the request
     console.error('Failed to record visit:', error)
   }
 
