@@ -2,80 +2,97 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { headers } from 'next/headers'
 
-type Props = {
-  params: Promise<{ id: string }> | { id: string }
+interface RouteParams {
+  params: {
+    id: string
+  }
 }
 
 export async function PATCH(
   request: Request,
-  { params }: Props
+  context: RouteParams
 ) {
   try {
     const headersList = await headers()
     const hasAdminToken = headersList.get('cookie')?.includes('admin-token')
-    const { id } = await params
 
     if (!hasAdminToken) {
-      return NextResponse.json({ 
-        success: false,
-        error: 'Unauthorized' 
-      }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    let updates
-    try {
-      updates = await request.json()
-    } catch (e) {
-      return NextResponse.json({
-        success: false,
-        error: 'Invalid JSON data'
-      }, { status: 400 })
+    // Get params and await it
+    const params = await context.params
+    const id = params.id
+
+    if (!id) {
+      return NextResponse.json({ error: 'Product ID is required' }, { status: 400 })
     }
 
-    // Validate updates
-    if (updates.price && isNaN(Number(updates.price))) {
-      return NextResponse.json({
-        success: false,
-        error: 'Price must be a number'
-      }, { status: 400 })
-    }
+    const data = await request.json()
+    
+    // Remove id from data object to prevent Prisma error
+    const { id: _, createdAt, updatedAt, OrderItem, ...updateData } = data
 
-    const updateData = {
-      name: updates.name,
-      description: updates.description,
-      price: Number(updates.price),
-      wholesalePrice: updates.wholesalePrice ? Number(updates.wholesalePrice) : null,
-      originalPrice: updates.category === 'clearance' 
-        ? Number(updates.originalPrice) || Number(updates.price)
-        : null,
-      stock: Number(updates.stock),
-      category: updates.category,
-      imageUrl: updates.imageUrl,
-      mancode: updates.mancode,
-      productcost: Number(updates.productcost),
-      productcharges: Number(updates.productcharges),
-      remarks: updates.remarks,
-      exchangeRate: Number(updates.exchangeRate),
-      additionalImages: Array.isArray(updates.additionalImages) 
-        ? updates.additionalImages 
-        : updates.additionalImages?.split('\n').filter(Boolean).map((url: string) => url.trim()) || [],
-      updatedAt: new Date()
-    }
+    // Convert wholesaleCo to string or null
+    const wholesaleCo = data.wholesaleCo !== undefined ? String(data.wholesaleCo) : null
 
-    const updatedProduct = await prisma.product.update({
+    const product = await prisma.product.update({
       where: { id },
-      data: updateData
+      data: {
+        ...updateData,
+        wholesaleCo,
+        price: parseFloat(data.price),
+        originalPrice: data.originalPrice ? parseFloat(data.originalPrice) : null,
+        wholesalePrice: data.wholesalePrice ? parseFloat(data.wholesalePrice) : null,
+        stock: parseInt(data.stock),
+        productcost: parseFloat(data.productcost),
+        productcharges: parseFloat(data.productcharges),
+        exchangeRate: parseFloat(data.exchangeRate),
+        version: { increment: 1 }
+      }
     })
 
-    return NextResponse.json({ 
-      success: true,
-      product: updatedProduct
-    })
+    return NextResponse.json({ success: true, product })
 
   } catch (error) {
-    return NextResponse.json({ 
-      success: false,
-      error: 'Failed to update product'
-    }, { status: 500 })
+    if (error instanceof Error) {
+      console.error('Product update error:', error.message)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    return NextResponse.json({ error: 'Failed to update product' }, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  context: RouteParams
+) {
+  try {
+    const headersList = await headers()
+    const hasAdminToken = headersList.get('cookie')?.includes('admin-token')
+
+    if (!hasAdminToken) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Get params and await it
+    const params = await context.params
+    const id = params.id
+
+    if (!id) {
+      return NextResponse.json({ error: 'Product ID is required' }, { status: 400 })
+    }
+
+    await prisma.product.delete({
+      where: { id }
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error('Product delete error:', error.message)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 })
   }
 } 

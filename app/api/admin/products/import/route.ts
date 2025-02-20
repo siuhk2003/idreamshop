@@ -71,6 +71,9 @@ export const POST = async (request: Request) => {
           throw new Error(`Invalid category "${row.category}" for product "${row.name}"`)
         }
 
+        // Convert wholesaleCo to string if it exists
+        const wholesaleCo = row.wholesaleCo !== undefined ? String(row.wholesaleCo) : null
+
         return prisma.product.create({
           data: {
             name: row.name,
@@ -81,7 +84,7 @@ export const POST = async (request: Request) => {
             imageUrl: row.imageUrl || '/placeholder.svg',
             category: row.category,
             stock: parseInt(row.stock),
-            color: row.color || null,
+            color: row.color || '',
             material: row.material || null,
             styleCode: row.styleCode,
             sku: row.sku,
@@ -91,7 +94,7 @@ export const POST = async (request: Request) => {
             remarks: row.remarks || null,
             additionalImages: row.additionalImages ? row.additionalImages.split(',').map((url: string) => url.trim()) : [],
             exchangeRate: parseFloat(row.exchangeRate),
-            wholesaleCo: row.wholesaleCo || null,
+            wholesaleCo: wholesaleCo,
             producttype: row.producttype || null,
             display: row.display || 'Yes',
           }
