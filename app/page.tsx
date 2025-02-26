@@ -10,8 +10,40 @@ import { Product } from '@/types/product'
 import { Header } from '@/components/Header'
 
 export default async function HomePage() {
-  // Fetch products from database
-  const products = await prisma.product.findMany({
+  // Fetch new products directly with their own query
+  const newArrivals = await prisma.product.findMany({
+    where: {
+      display: 'Yes',
+      category: 'new'
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 4,
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      price: true,
+      originalPrice: true,
+      wholesalePrice: true,
+      imageUrl: true,
+      category: true,
+      stock: true,
+      color: true,
+      material: true,
+      styleCode: true,
+      sku: true,
+      additionalImages: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  }) as unknown as Product[]
+
+  // Fetch other products
+  const otherProducts = await prisma.product.findMany({
+    where: {
+      display: 'Yes',
+      category: { not: 'new' }
+    },
     orderBy: { createdAt: 'desc' },
     select: {
       id: true,
@@ -33,8 +65,8 @@ export default async function HomePage() {
     }
   }) as unknown as Product[]
 
-  // Update the grouping logic to keep all products
-  const productsByCategory = products.reduce((acc, product) => {
+  // Group other products by category
+  const productsByCategory = otherProducts.reduce((acc, product) => {
     if (!acc[product.category]) {
       acc[product.category] = []
     }
@@ -43,13 +75,12 @@ export default async function HomePage() {
   }, {} as Record<string, Product[]>)
 
   // Get first 4 products from each category
-  const newArrivals = (productsByCategory['new'] || []).slice(0, 4)
   const featuredProducts = (productsByCategory['regular'] || []).slice(0, 4)
   const clearanceProducts = (productsByCategory['clearance'] || []).slice(0, 4)
 
   // Debug logs
   console.log('First new arrival:', newArrivals[0]?.sku)
-  console.log('Product data:', products[0])
+  console.log('Product data:', otherProducts[0])
   console.log('New Arrivals:', newArrivals[0])
 
   return (
